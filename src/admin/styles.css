@@ -1,0 +1,143 @@
+/* /admin. Plain CSS: Tailwind is for the landing page only. */
+
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --fg: #fff;
+  --muted: #9a9a9a;
+  --line: #333;
+  --live: #1f9d55;
+  --off: #555;
+  --unknown: #b7791f;
+  --danger: #c53030;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The views below set their own display, which would otherwise win over the browser's
+   [hidden] rule and show a view the script has hidden. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+.admin,
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.state {
+  border: 2px solid var(--unknown);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.state[data-live="true"] {
+  border-color: var(--live);
+}
+
+.state[data-live="false"] {
+  border-color: var(--off);
+}
+
+.state-label {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.state-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.toggle {
+  min-height: 4rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--live);
+  color: var(--fg);
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.state[data-live="true"] ~ .toggle {
+  background: var(--danger);
+}
+
+.toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.message {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--danger);
+  text-align: center;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.login input {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #111;
+  color: var(--fg);
+}
+
+.login button {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #222;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.logout {
+  align-self: center;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+}

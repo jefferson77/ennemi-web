@@ -4,20 +4,22 @@ import tailwindcss from '@tailwindcss/vite';
 
 const root = import.meta.dirname;
 
-// `/morceau` without the trailing slash would miss morceau/index.html, and relative URLs inside
-// it would resolve one level too high. nginx does the same 308 in production (see README).
-function morceauTrailingSlash() {
+// A page directory without its trailing slash (`/morceau`) would miss its index.html, and relative
+// URLs inside it would resolve one level too high. nginx does the same 308s in production (see
+// README).
+function trailingSlash(paths) {
   const redirect = (req, res, next) => {
-    if (req.url === '/morceau' || req.url?.startsWith('/morceau?')) {
+    const path = paths.find((p) => req.url === p || req.url?.startsWith(`${p}?`));
+    if (path) {
       res.statusCode = 308;
-      res.setHeader('Location', req.url.replace('/morceau', '/morceau/'));
+      res.setHeader('Location', req.url.replace(path, `${path}/`));
       res.end();
       return;
     }
     next();
   };
   return {
-    name: 'morceau-trailing-slash',
+    name: 'trailing-slash',
     // Block bodies on purpose: a hook that returns a function has it run as a post-middleware.
     configureServer(server) {
       server.middlewares.use(redirect);
@@ -28,10 +30,13 @@ function morceauTrailingSlash() {
   };
 }
 
+// The live-state API (server/, `make api`). In production nginx proxies /api/ to it the same way.
+const apiProxy = { '/api': 'http://127.0.0.1:8787' };
+
 export default defineConfig({
-  plugins: [tailwindcss(), morceauTrailingSlash()],
-  server: { port: 5173 },
-  preview: { port: 4173 },
+  plugins: [tailwindcss(), trailingSlash(['/morceau', '/admin'])],
+  server: { port: 5173, proxy: apiProxy },
+  preview: { port: 4173, proxy: apiProxy },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -41,6 +46,7 @@ export default defineConfig({
       input: {
         main: resolve(root, 'index.html'),
         morceau: resolve(root, 'morceau/index.html'),
+        admin: resolve(root, 'admin/index.html'),
       },
     },
   },

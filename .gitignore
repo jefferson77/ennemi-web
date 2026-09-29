@@ -1,6 +1,9 @@
 # Build output
 dist
 
+# Local state of the live-state API (make api)
+.state
+
 # Node dependencies
 node_modules
 
@@ -14,9 +17,10 @@ public/morceau/video/Clips
 .DS_Store
 .idea
 
-# Local env files
+# Local env files. .env holds the API secrets (see .env.example, the committed template).
 .env
 .env.*
+!.env.example
 
 # Claude Code — personal, machine-local only.
 CLAUDE.local.md

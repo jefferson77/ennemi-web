@@ -13,8 +13,16 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/src/online/styles.css" />
   </head>
-  <body>
-    <div class="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 px-4 py-8">
+  <!-- Black until src/online/live.js knows whether a show is running: it then reveals either the
+       placeholder or the tutorial, so neither flashes up only to be swapped for the other. -->
+  <body class="bg-black">
+    <!-- Outside a show -->
+    <div id="placeholder" class="fixed inset-0 flex items-center justify-center bg-black" hidden>
+      <p class="text-white text-3xl font-light tracking-wide">ennemi.net</p>
+    </div>
+
+    <!-- During a show: the connection tutorial -->
+    <div id="tutorial" class="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 px-4 py-8" hidden>
       <!-- Header with emojis -->
       <div class="text-center mb-6">
         <p class="text-3xl mb-4">🚧😅🤔🧐🚫😱🤬🥵⚠️</p>

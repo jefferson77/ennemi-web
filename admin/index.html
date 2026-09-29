@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>ennemi.net · admin</title>
+
+    <!-- Cache control meta tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <link rel="stylesheet" href="/src/admin/styles.css" />
+  </head>
+  <body>
+    <!-- Both views stay hidden until src/admin/main.js knows whether there is a session. The
+         panel carries no data of its own: the state is only fetched once logged in. -->
+    <main class="admin">
+      <h1>ennemi.net</h1>
+
+      <form class="login" id="loginView" hidden>
+        <label for="password">Mot de passe</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <button type="submit" id="loginButton">Se connecter</button>
+        <p class="message" id="loginMessage" role="alert"></p>
+      </form>
+
+      <section class="panel" id="panelView" hidden>
+        <!-- data-live is "true", "false" or "unknown", and drives the colours -->
+        <div class="state" id="state" data-live="unknown" aria-live="polite">
+          <p class="state-label" id="stateLabel">Chargement…</p>
+          <p class="state-meta" id="stateMeta"></p>
+        </div>
+
+        <button class="toggle" id="toggle" type="button" disabled>…</button>
+        <p class="message" id="panelMessage" role="status"></p>
+
+        <button class="logout" id="logout" type="button">Se déconnecter</button>
+      </section>
+    </main>
+
+    <script type="module" src="/src/admin/main.js"></script>
+  </body>
+</html>

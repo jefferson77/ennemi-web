@@ -8,6 +8,7 @@ exclude_patterns = [
   "**/node_modules/**",
   "**/dist/**",
   "public/**", # served verbatim: images, video, audio
+  ".serena/**", # the Serena MCP server's own project state, not code of this project
 ]
 
 [[source]]

@@ -1,0 +1,6 @@
+# qlty's caches and run output stay local; only the configuration is committed.
+*
+!configs
+!configs/**
+!qlty.toml
+!.gitignore

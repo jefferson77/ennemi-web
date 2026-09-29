@@ -6,7 +6,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "postbuild": "node scripts/compress.mjs",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "api": "node --watch --env-file-if-exists=.env server/index.js",
+    "test": "node --test 'server/**/*.test.js'"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

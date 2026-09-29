@@ -14,7 +14,7 @@ export default [
   },
   {
     name: 'ennemi-web/node',
-    files: ['scripts/**/*.{js,mjs}', '*.config.{js,mjs}'],
+    files: ['scripts/**/*.{js,mjs}', 'server/**/*.js', '*.config.{js,mjs}'],
     languageOptions: { globals: globals.node },
   },
   prettierConfig,

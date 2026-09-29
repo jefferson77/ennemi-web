@@ -10,7 +10,9 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 max_line_length = 120
 
-# The shell scripts predate this file and are consistently 4-space indented.
-# shfmt (run via `make quality`) reads .editorconfig, so keep it matching reality.
+# The shell scripts predate this file and are consistently 4-space indented, with case
+# branches indented under their `case`. shfmt (run via `make quality`) reads .editorconfig,
+# so keep it matching reality.
 [*.sh]
 indent_size = 4
+switch_case_indent = true

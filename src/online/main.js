@@ -1,3 +1,5 @@
+import { startLiveSwitch } from './live.js';
+
 // Carousel state
 let currentSlide = 0;
 const totalSlides = 6;
@@ -156,30 +158,24 @@ function handleSwipe() {
   const swipeThreshold = 50;
   const diff = touchStartX - touchEndX;
 
-  // Debug logging (can be removed in production)
-  if (Math.abs(diff) > 10) {
-    console.log('Swipe detected:', {
-      start: touchStartX,
-      end: touchEndX,
-      diff: diff,
-      threshold: swipeThreshold,
-    });
-  }
-
   if (diff > swipeThreshold) {
     // Swiped left, go to next slide
-    console.log('→ Next slide');
     nextSlide();
   } else if (diff < -swipeThreshold) {
     // Swiped right, go to previous slide
-    console.log('← Previous slide');
     prevSlide();
   }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
+// Initialize when DOM is ready. The carousel is set up even while the tutorial is hidden, so it
+// is ready the moment the live switch reveals it.
+function start() {
   init();
+  startLiveSwitch();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', start);
+} else {
+  start();
 }
