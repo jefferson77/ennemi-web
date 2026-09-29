@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oups ! Vous n'êtes pas au bon endroit !</title>
+
+    <!-- Cache control meta tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/src/online/styles.css" />
+  </head>
+  <body>
+    <div class="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 px-4 py-8">
+      <!-- Header with emojis -->
+      <div class="text-center mb-6">
+        <p class="text-3xl mb-4">🚧😅🤔🧐🚫😱🤬🥵⚠️</p>
+        <h1 class="text-2xl font-bold text-gray-800">Oups ! Vous n'êtes pas au bon endroit !</h1>
+      </div>
+
+      <!-- Explanation section -->
+      <div class="bg-white dark:!bg-white rounded-xl p-5 mb-8 shadow-md max-w-lg mx-auto">
+        <ul class="space-y-3 text-gray-600 text-sm">
+          <li class="flex items-start gap-2">
+            <span class="text-orange-500 mt-1">•</span>
+            <span>Vérifiez que vous êtes bien connectée au réseau <strong>wifi_du_spectacle</strong></span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-orange-500 mt-1">•</span>
+            <span>Si vous utilisez un <strong>VPN</strong>, désactivez-le.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-orange-500 mt-1">•</span>
+            <span
+              >Si vous utilisez un <strong>iPhone</strong>, c'est peut-être votre "relais privé iCloud" qui vous empêche
+              d'accéder à la bonne page. Essayez de le désactiver en suivant les étapes décrites ci-dessous.</span
+            >
+          </li>
+
+          <li class="flex items-start gap-2">
+            <span class="text-orange-500 mt-1">•</span>
+            <span
+              >Si tout ça ne marche pas, ouille, alors là bon, euh, héhé, flûte... mais vous pouvez aussi suivre le
+              spectacle avec votre voisin ou votre voisine, ce sera l'occasion de faire connaissance, et qui sait, c'est
+              peut-être le début d'une belle histoire…</span
+            >
+          </li>
+        </ul>
+      </div>
+
+      <!-- Tutorial section -->
+      <div class="max-w-lg mx-auto">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+          📱 Pour désactiver le "relais privé" sur un iPhone :
+        </h2>
+
+        <!-- Carousel -->
+        <div id="carousel" class="bg-white dark:!bg-white rounded-xl shadow-lg overflow-hidden">
+          <!-- Slides -->
+          <div class="relative h-[600px]">
+            <div class="slide-container">
+              <!-- Slide 0 -->
+              <div class="slide active p-4 flex flex-col" data-slide="0">
+                <p class="text-sm text-gray-600 mb-3 text-center min-h-[3rem]">
+                  Rendez-vous dans les réglages de votre iPhone et cliquez sur votre nom.
+                </p>
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/privateRelay_01.png"
+                    alt="Rendez-vous dans les réglages de votre iPhone et cliquez sur votre nom."
+                    class="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Slide 1 -->
+              <div class="slide p-4 flex flex-col" data-slide="1">
+                <p class="text-sm text-gray-600 mb-3 text-center min-h-[3rem]">Puis cliquez sur iCloud.</p>
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/privateRelay_02.png"
+                    alt="Puis cliquez sur iCloud."
+                    class="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Slide 2 -->
+              <div class="slide p-4 flex flex-col" data-slide="2">
+                <p class="text-sm text-gray-600 mb-3 text-center min-h-[3rem]">
+                  Une fois dans les réglages iCloud, descendez jusqu'à trouver "Relais Privé" et cliquez-y dessus.
+                </p>
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/privateRelay_03.png"
+                    alt="Une fois dans les réglages iCloud, descendez jusqu'à trouver Relais Privé et cliquez-y dessus."
+                    class="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Slide 3 -->
+              <div class="slide p-4 flex flex-col" data-slide="3">
+                <p class="text-sm text-gray-600 mb-3 text-center min-h-[3rem]">
+                  Manifestez votre envie de le désactiver en actionnant cet interrupteur.
+                </p>
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/privateRelay_04.png"
+                    alt="Manifestez votre envie de le désactiver en actionnant cet interrupteur."
+                    class="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Slide 4 -->
+              <div class="slide p-4 flex flex-col" data-slide="4">
+                <p class="text-sm text-gray-600 mb-3 text-center min-h-[3rem]">
+                  Confirmez la désactivation (soit jusqu'à demain, soit pour plus longtemps).
+                </p>
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/privateRelay_05.PNG"
+                    alt="Confirmez la désactivation (soit jusqu'à demain, soit pour plus longtemps)."
+                    class="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Slide 5 (final, no image) -->
+              <div class="slide p-4 flex flex-col" data-slide="5">
+                <div class="flex-1 flex items-center justify-center">
+                  <div class="text-center p-6 bg-green-100 rounded-xl">
+                    <p class="text-4xl mb-4">🤞🏼</p>
+                    <p class="text-green-800 text-lg font-medium whitespace-pre-line">
+                      Et voilà ! Réessayez de vous connecter (rechargez la page), espérons que ça fonctionne maintenant
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation controls below the slides -->
+          <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-200">
+            <!-- Previous button -->
+            <button
+              id="prevButton"
+              class="bg-orange-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-md hover:bg-orange-600 active:bg-orange-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              style="display: none"
+              aria-label="Previous slide"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+              </svg>
+            </button>
+
+            <!-- Dots indicator (centered) -->
+            <div id="dotsContainer" class="flex justify-center gap-2 flex-1">
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-orange-500 scale-110"
+                data-slide="0"
+                aria-label="Go to slide 1"
+              ></button>
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-gray-300 hover:bg-gray-400"
+                data-slide="1"
+                aria-label="Go to slide 2"
+              ></button>
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-gray-300 hover:bg-gray-400"
+                data-slide="2"
+                aria-label="Go to slide 3"
+              ></button>
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-gray-300 hover:bg-gray-400"
+                data-slide="3"
+                aria-label="Go to slide 4"
+              ></button>
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-gray-300 hover:bg-gray-400"
+                data-slide="4"
+                aria-label="Go to slide 5"
+              ></button>
+              <button
+                class="dot w-3 h-3 rounded-full transition-all bg-gray-300 hover:bg-gray-400"
+                data-slide="5"
+                aria-label="Go to slide 6"
+              ></button>
+            </div>
+
+            <!-- Next button -->
+            <button
+              id="nextButton"
+              class="bg-orange-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-md hover:bg-orange-600 active:bg-orange-700 transition-colors"
+              aria-label="Next slide"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script type="module" src="/src/online/main.js"></script>
+  </body>
+</html>

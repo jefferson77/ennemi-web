@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Morceau</title>
+    <link rel="stylesheet" href="/src/morceau/styles.css" />
+  </head>
+  <body>
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="phone-button phone-button--power"></div>
+      <div class="phone-button phone-button--volume-up"></div>
+      <div class="phone-button phone-button--volume-down"></div>
+      <div class="phone-screen">
+        <div id="app">
+          <section class="screen" data-screen="audio-intro" data-active>
+            <div class="screen__text">
+              <p>Il faut mettre le son sinon ça va pas marcher.</p>
+              <p>Testons ça avec des bruits d'oiseaux par exemple :</p>
+            </div>
+            <button class="screen__btn screen__btn--cyan" data-action="advance">Lancer les bruits d'oiseaux</button>
+          </section>
+
+          <section class="screen" data-screen="audio-gate">
+            <div class="screen__text">
+              <p>Là par exemple vous devriez entendre des bruits d'oiseaux...</p>
+            </div>
+            <button class="screen__btn screen__btn--cyan" data-action="advance">
+              Ok j'entends les bruits d'oiseaux
+            </button>
+          </section>
+
+          <section class="screen" data-screen="intro">
+            <video class="screen__video" playsinline preload="auto"></video>
+          </section>
+
+          <section class="screen" data-screen="description">
+            <div class="screen__text">
+              Steve a 18 ans, il est très timide et réservé, très serviable, même s'il ne s'intéresse pas beaucoup aux
+              autres. Il a l'air de vivre un peu dans son monde. Il est très méthodique et il aime bien quand tout est
+              bien rangé.
+            </div>
+            <button class="screen__btn screen__btn--cyan" data-action="advance">OK c'est bon</button>
+            <video class="screen__video" playsinline preload="auto" loop></video>
+          </section>
+
+          <section class="screen" data-screen="a-ton-avis">
+            <video class="screen__video" playsinline preload="auto"></video>
+          </section>
+
+          <section class="screen" data-screen="vote">
+            <div class="screen__text">À votre avis, Steve a plus de chance de devenir :</div>
+            <div class="screen__buttons">
+              <button class="screen__btn screen__btn--cyan" data-vote="agriculteur">Agriculteur</button>
+              <button class="screen__btn screen__btn--yellow" data-vote="bibliothecaire">Bibliothécaire</button>
+            </div>
+            <video class="screen__video" playsinline preload="auto" loop></video>
+          </section>
+
+          <section class="screen" data-screen="results">
+            <div class="results-overlay">
+              <h2>Résultats :</h2>
+              <div class="results-row" style="--bar-pct: 17%">
+                <span class="hl hl--cyan">AGRICULTEUR</span> <strong>17%</strong>
+              </div>
+              <div class="results-row" style="--bar-pct: 83%">
+                <span class="hl hl--yellow">BIBLIOTHÉCAIRE</span> <strong>83%</strong>
+              </div>
+            </div>
+            <video class="screen__video" playsinline preload="auto"></video>
+          </section>
+
+          <section class="screen screen--credits" data-screen="credits">
+            <h1>L'ENNEMI EST BÊTE<sup>*</sup></h1>
+            <p class="credits__authors">Antoine&nbsp;Defoort, Arnaud&nbsp;Hoedt, Jérôme&nbsp;Piron</p>
+            <hr />
+            <div class="credits__dates">
+              <p><strong>09 mars - 19 mars 2027</strong><br />Théâtre Jean Vilar (Louvain la Neuve)</p>
+              <p><strong>23 mars - 03 avril 2027</strong><br />Théâtre Les Tanneurs (Bruxelles)</p>
+              <p><strong>06 avril - 10 avril 2027</strong><br />Théâtre de l'Ancre (Charleroi)</p>
+              <p><strong>15 avril - 16 avril 2027</strong><br />La rose des vents (Lille)</p>
+              <p class="credits__contact">Contact diffusion :<br />diffusion@habemuspapam.be</p>
+            </div>
+            <p class="credits__footnote">
+              *il pense que c'est nous l'ennemi,<br />alors qu'en fait c'est lui<br />(Pierre Desproges)
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/morceau/app.js"></script>
+  </body>
+</html>

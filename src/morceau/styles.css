@@ -1,0 +1,271 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: #000;
+}
+
+/* Mobile / default: #app fills the viewport, frame chrome is invisible. */
+.phone-frame {
+  width: 0;
+  height: 0;
+}
+.phone-notch,
+.phone-button {
+  display: none;
+}
+.phone-screen {
+  display: contents;
+}
+#app {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Screens (state machine) --- */
+.screen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  padding: 64px 34px 24px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  min-height: 0;
+}
+.screen[data-active] {
+  display: flex;
+}
+.screen:has(.screen__video) {
+  padding-bottom: 0;
+}
+
+.screen__text {
+  font-size: 22px;
+  line-height: 1.35;
+}
+.screen__text--small {
+  font-size: 16px;
+  opacity: 0.7;
+}
+.screen__hint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-style: italic;
+  font-size: 18px;
+  opacity: 0.75;
+  padding: 0 8px;
+}
+
+.screen__btn {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 16px auto;
+  padding: 18px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 22px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+}
+.screen__btn--cyan {
+  background: #dbeafe;
+}
+.screen__btn--yellow {
+  background: #fef3c7;
+}
+.screen__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  padding-top: 32px;
+}
+
+.screen__video {
+  margin-top: auto;
+  margin-left: -60px;
+  margin-right: -60px;
+  width: calc(100% + 120px);
+  height: auto;
+  display: block;
+  background: transparent;
+}
+
+/* Results overlay */
+.results-overlay {
+  padding-top: 32px;
+  transition: opacity 600ms ease;
+}
+.results-overlay--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.results-overlay h2 {
+  font-size: 24px;
+  margin: 0 0 24px;
+}
+.results-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 12px 0;
+  background: linear-gradient(
+    to right,
+    var(--bar-color, transparent) var(--bar-pct, 0%),
+    transparent var(--bar-pct, 0%)
+  );
+}
+.results-row:has(.hl--cyan) {
+  --bar-color: #dbeafe;
+}
+.results-row:has(.hl--yellow) {
+  --bar-color: #fef3c7;
+}
+.hl {
+  padding: 7px 8px;
+  color: #374151;
+}
+
+/* Credits — black bg overrides default */
+.screen--credits {
+  background: #000;
+  color: #fff;
+  align-items: center;
+  text-align: center;
+  justify-content: space-between;
+  padding: 88px 34px 48px;
+}
+.screen--credits h1 {
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+.screen--credits hr {
+  width: 60%;
+  border: 0;
+  border-top: 1px solid #fff;
+  margin: 24px auto;
+}
+.credits__authors {
+  font-size: 16px;
+}
+.credits__dates {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.credits__dates p {
+  margin: 10px 0;
+}
+.credits__dates strong {
+  font-weight: 700;
+}
+.credits__contact {
+  margin-top: 18px !important;
+  opacity: 0.85;
+}
+.credits__footnote {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* Desktop: only when there's room AND a fine pointer (mouse). */
+@media (min-width: 768px) and (pointer: fine) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: rgb(51, 65, 85);
+  }
+
+  .phone-frame {
+    position: relative;
+    box-sizing: border-box;
+    height: min(85vh, 780px);
+    aspect-ratio: 9 / 19.5;
+    width: auto;
+    background: #000;
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 2px #2a2a2a;
+  }
+
+  .phone-screen {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  #app {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+  }
+
+  .phone-notch {
+    display: block;
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32%;
+    height: 22px;
+    background: #000;
+    border-radius: 999px;
+    z-index: 2;
+  }
+
+  .phone-button {
+    display: block;
+    position: absolute;
+    background: #2a2a2a;
+  }
+  .phone-button--power {
+    right: -2px;
+    top: 24%;
+    width: 3px;
+    height: 11%;
+    border-radius: 0 2px 2px 0;
+  }
+  .phone-button--volume-up {
+    left: -2px;
+    top: 19%;
+    width: 3px;
+    height: 7%;
+    border-radius: 2px 0 0 2px;
+  }
+  .phone-button--volume-down {
+    left: -2px;
+    top: 28%;
+    width: 3px;
+    height: 7%;
+    border-radius: 2px 0 0 2px;
+  }
+}

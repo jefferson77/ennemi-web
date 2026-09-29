@@ -1,0 +1,65 @@
+# Code quality configuration for ennemi-web.
+#
+# Run the gate with `make quality`; auto-fix what can be fixed with `make quality-fix`.
+# Full reference: https://docs.qlty.sh/qlty-toml
+config_version = "0"
+
+exclude_patterns = [
+  "**/node_modules/**",
+  "**/dist/**",
+  "public/**", # served verbatim: images, video, audio
+]
+
+[[source]]
+name = "default"
+default = true
+
+# --- Plugins ------------------------------------------------------------------------
+
+# Lints .js / .mjs. package_file makes qlty install OUR eslint stack into its sandbox,
+# so @eslint/js, globals and eslint-config-prettier resolve from eslint.config.mjs.
+[[plugin]]
+name = "eslint"
+version = "10.11.0"
+package_file = "package.json"
+package_filters = ["eslint", "@eslint/js", "globals", "eslint-config-prettier"]
+config_files = ["eslint.config.mjs"]
+
+# Formats .html .js .json .md .css
+[[plugin]]
+name = "prettier"
+version = "3.6.2"
+
+# scripts/*.sh
+[[plugin]]
+name = "shellcheck"
+version = "0.11.0"
+
+[[plugin]]
+name = "shfmt"
+version = "3.8.0"
+
+[[plugin]]
+name = "markdownlint"
+version = "0.46.0"
+
+# Dependency CVEs from package-lock.json
+[[plugin]]
+name = "osv-scanner"
+version = "2.3.0"
+
+# Hardcoded secrets
+[[plugin]]
+name = "gitleaks"
+version = "8.29.1"
+
+# --- Exclusions ---------------------------------------------------------------------
+# Agent instructions, not prose documentation.
+[[exclude]]
+plugins = ["markdownlint"]
+file_patterns = [".claude/**", "CLAUDE.md"]
+
+# osv-scanner needs package-lock.json; nothing else should touch it.
+[[exclude]]
+plugins = ["prettier", "gitleaks"]
+file_patterns = ["package-lock.json"]

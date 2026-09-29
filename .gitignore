@@ -1,0 +1,23 @@
+# Build output
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+*.log
+
+# Green-screen .mov masters for scripts/convert-morceau-clips.sh (large, not committed)
+public/morceau/video/Clips
+
+# Misc
+.DS_Store
+.idea
+
+# Local env files
+.env
+.env.*
+
+# Claude Code — personal, machine-local only.
+CLAUDE.local.md
+.claude/settings.local.json
