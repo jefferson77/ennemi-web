@@ -81,7 +81,7 @@ show app switches automatically and `/admin/` switches by hand.
 - Every answer is `Cache-Control: no-store`. A `PUT` or `POST` with a body needs `Content-Type: application/json` and a
   body under 1 KB.
 - The state is one JSON file, written atomically. A fresh host starts with no show running.
-- `/` checks the state on load, every 30 s and when the phone brings the page back to the
+- `/` checks the state on load, every 5 s and when the phone brings the page back to the
   foreground. If the API cannot be reached it shows the tutorial: during a show, an outage must
   never hide the reconnection help.
 

@@ -7,7 +7,9 @@
 
 const STATUS_URL = '/api/live';
 const TIMEOUT_MS = 2500;
-const RECHECK_MS = 30_000;
+// Short, so a phone already on the page follows the show's Play and Stop within seconds. Longer
+// than TIMEOUT_MS, so a slow answer is given up before the next check starts.
+const RECHECK_MS = 5_000;
 
 const TUTORIAL_TITLE = document.title;
 const PLACEHOLDER_TITLE = 'ennemi.net';
