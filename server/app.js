@@ -1,18 +1,23 @@
 // HTTP handler for the "spectacle live" API. Plain (req, res), no framework, so it runs on bare
 // node:http and the tests can drive it on an ephemeral port.
 //
-//   GET  /api/live           public          -> {live}
-//   PUT  /api/live           Bearer token    <- {"live": true|false}, -> the new state (the show app)
+//   GET  /api/live           public          -> {live, planB}
+//   PUT  /api/live           Bearer token    <- {"live": true|false, "instanceId"?: uuid}, -> the new
+//                                               state (the show app)
+//   POST /api/planb          public          sets the Plan B cookie, or 409 when there is no Plan B
+//   GET  /api/planb/check    Plan B cookie   204 if it is the running instance's, else 401 (nginx)
 //   POST /api/admin/login    password        <- {"password": "..."}, sets the session cookie
 //   POST /api/admin/logout   none            clears the session cookie
-//   GET  /api/admin/state    session cookie  -> {live, updatedAt, source}
+//   GET  /api/admin/state    session cookie  -> {live, instanceId, updatedAt, source}
 //   PUT  /api/admin/live     session cookie  <- {"live": true|false}, -> the new state
 //   GET  /api/healthz        public          -> ok
 //
-// The admin password is accepted at /api/admin/login only, which nginx rate-limits.
+// The admin password is accepted at /api/admin/login only, which nginx rate-limits. Plan B is
+// described in planb.js.
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { readState, writeState } from './state.js';
+import { createStateStore, isInstanceId } from './state.js';
 import { createSessions, readSessionCookie, sessionCookie } from './session.js';
+import { PLANB_TTL_MS, holdsPlanB, isPlanBActive, planbCookie } from './planb.js';
 
 const MAX_BODY_BYTES = 1024;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
@@ -53,7 +58,18 @@ async function readJsonBody(req) {
 async function readLive(req) {
   const body = await readJsonBody(req);
   if (typeof body?.live !== 'boolean') throw new HttpError(400, '"live" must be true or false');
-  return body.live;
+  return body;
+}
+
+// The show app also says which spectacle instance is playing, which Plan B is keyed on. Optional,
+// so a show app that predates Plan B still switches the site, only without a Plan B. A show that
+// stops has no instance, whatever was sent.
+function readInstanceId(body) {
+  const instanceId = body.instanceId ?? null;
+  if (instanceId !== null && !isInstanceId(instanceId)) {
+    throw new HttpError(400, '"instanceId" must be a lowercase UUID');
+  }
+  return body.live ? instanceId : null;
 }
 
 function send(res, status, body) {
@@ -83,6 +99,30 @@ function isHttps(req) {
 }
 
 /**
+ * The Plan B routes (see planb.js): the tutorial's button, and the check nginx makes.
+ * @param {{store: ReturnType<typeof createStateStore>, log: (line: string) => void}} deps
+ */
+function planBRoutes({ store, log }) {
+  async function open(req, res) {
+    const state = await store.get();
+    if (!isPlanBActive(state)) throw new HttpError(409, 'no Plan B right now');
+    res.setHeader('Set-Cookie', planbCookie(state.instanceId, { secure: isHttps(req), maxAgeMs: PLANB_TTL_MS }));
+    log(`plan B for ${state.instanceId} from ${clientAddress(req)}`);
+    send(res, 204);
+  }
+
+  // nginx's auth_request, on every request of a Plan B phone: a bare status, and no log line.
+  async function check(req, res) {
+    send(res, holdsPlanB(await store.get(), req.headers.cookie) ? 204 : 401);
+  }
+
+  return {
+    '/api/planb': { POST: open },
+    '/api/planb/check': { GET: check, HEAD: check },
+  };
+}
+
+/**
  * @param {object} options
  * @param {string} options.stateDir - Where state.json lives
  * @param {string} options.showToken - Secret of the show app, recorded as source "show"
@@ -100,20 +140,17 @@ export function createHandler({
   now = Date.now,
 }) {
   const sessions = createSessions({ password: adminPassword, ttlMs: sessionTtlMs, now });
+  const store = createStateStore(stateDir);
 
   function refuse(req, status, message) {
     log(`refused ${req.method} ${req.url} from ${clientAddress(req)}: ${message}`);
     return new HttpError(status, message);
   }
 
-  // Writes are chained so two overlapping PUTs land in the order they arrived.
-  let writes = Promise.resolve();
-  async function setLive(req, live, source) {
-    const state = { live, updatedAt: new Date(now()).toISOString(), source };
-    const next = writes.then(() => writeState(stateDir, state));
-    writes = next.catch(() => {});
-    await next;
-    log(`live=${live} by ${source} from ${clientAddress(req)}`);
+  async function setLive(req, { live, instanceId }, source) {
+    const state = await store.set({ live, instanceId, updatedAt: new Date(now()).toISOString(), source });
+    const instance = instanceId ? ` (instance ${instanceId})` : '';
+    log(`live=${live}${instance} by ${source} from ${clientAddress(req)}`);
     return state;
   }
 
@@ -145,25 +182,35 @@ export function createHandler({
 
   const routes = {
     '/api/live': {
-      // Only the boolean: when and by whom it changed is for logged-in admins.
-      GET: async (req, res) => send(res, 200, { live: (await readState(stateDir)).live }),
+      // Whether a show is running and whether it has a Plan B: when and by whom it changed is
+      // for logged-in admins.
+      GET: async (req, res) => {
+        const state = await store.get();
+        send(res, 200, { live: state.live, planB: isPlanBActive(state) });
+      },
       PUT: async (req, res) => {
         requireShowToken(req);
-        send(res, 200, await setLive(req, await readLive(req), 'show'));
+        const body = await readLive(req);
+        send(res, 200, await setLive(req, { live: body.live, instanceId: readInstanceId(body) }, 'show'));
       },
     },
+    ...planBRoutes({ store, log }),
     '/api/admin/login': { POST: login },
     '/api/admin/logout': { POST: logout },
     '/api/admin/state': {
       GET: async (req, res) => {
         requireSession(req);
-        send(res, 200, await readState(stateDir));
+        send(res, 200, await store.get());
       },
     },
     '/api/admin/live': {
+      // The admin names no instance and keeps the show app's: switching off and on again in the
+      // middle of a show gives its Plan B back.
       PUT: async (req, res) => {
         requireSession(req);
-        send(res, 200, await setLive(req, await readLive(req), 'admin'));
+        const { live } = await readLive(req);
+        const { instanceId } = await store.get();
+        send(res, 200, await setLive(req, { live, instanceId }, 'admin'));
       },
     },
     '/api/healthz': {

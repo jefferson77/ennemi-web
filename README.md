@@ -5,8 +5,9 @@ service that stores whether a show is running.
 
 - `/` — while a show is running, "Oups ! Vous n'êtes pas au bon endroit !", the page an audience
   member lands on when their phone reaches the public internet instead of the show's venue network
-  (wrong wifi, VPN, iCloud Private Relay). It walks them through turning Private Relay off. The
-  rest of the time, just "ennemi.net" in white on black.
+  (wrong wifi, VPN, iCloud Private Relay). It walks them through turning Private Relay off, and
+  ends on a [Plan B](#plan-b) button for whoever still cannot get on. The rest of the time, just
+  "ennemi.net" in white on black.
 - `/morceau/` — a standalone trailer: a short interactive excerpt of the show, played on a mock phone.
 - `/admin/` — a login form, then a switch to set by hand whether a show is running. Without a
   session nothing but the form is shown.
@@ -35,7 +36,8 @@ ennemi-brain inside the venue network. The two projects share no code.
 
 ```text
 index.html               landing page (Tailwind v4, compiled at build time)
-src/online/              its script and stylesheet; live.js picks the tutorial or the placeholder
+src/online/              its scripts and stylesheet; live.js picks the tutorial or the placeholder,
+                         planb.js is the Plan B button
 morceau/index.html       the trailer
 src/morceau/             its script and stylesheet (plain CSS, no Tailwind)
 admin/index.html         the live switch
@@ -59,18 +61,24 @@ plugin in `vite.config.js`; in production nginx does it.
 Whether a show is running decides what `/` shows. It is stored by the API in `server/`, which the
 show app switches automatically and `/admin/` switches by hand.
 
-| Request                  | Auth               | Body / answer                                 |
-| ------------------------ | ------------------ | --------------------------------------------- |
-| `GET /api/live`          | none               | answers `{"live"}` and nothing more           |
-| `PUT /api/live`          | `Bearer` token     | sends `{"live": true}`, answers the new state |
-| `POST /api/admin/login`  | the password       | sends `{"password"}`, sets the session cookie |
-| `POST /api/admin/logout` | none               | clears the session cookie                     |
-| `GET /api/admin/state`   | the session cookie | answers `{"live", "updatedAt", "source"}`     |
-| `PUT /api/admin/live`    | the session cookie | sends `{"live": true}`, answers the new state |
-| `GET /api/healthz`       | none               | answers `ok`                                  |
+| Request                  | Auth               | Body / answer                                               |
+| ------------------------ | ------------------ | ----------------------------------------------------------- |
+| `GET /api/live`          | none               | answers `{"live", "planB"}` and nothing more                |
+| `PUT /api/live`          | `Bearer` token     | sends `{"live": true, "instanceId"}`, answers the new state |
+| `POST /api/planb`        | none               | sets the Plan B cookie, or answers 409                      |
+| `GET /api/planb/check`   | the Plan B cookie  | answers 204 if it is the running instance's, else 401       |
+| `POST /api/admin/login`  | the password       | sends `{"password"}`, sets the session cookie               |
+| `POST /api/admin/logout` | none               | clears the session cookie                                   |
+| `GET /api/admin/state`   | the session cookie | answers `{"live", "instanceId", "updatedAt", "source"}`     |
+| `PUT /api/admin/live`    | the session cookie | sends `{"live": true}`, answers the new state               |
+| `GET /api/healthz`       | none               | answers `ok`                                                |
 
 - `PUT /api/live` is the show app's, with `SHOW_TOKEN`. `/admin/` logs in with `ADMIN_PASSWORD`,
   which is accepted at `/api/admin/login` only — the one place nginx rate-limits guesses.
+- `instanceId` is the id of the spectacle instance that is playing (one performance, from Play to
+  Stop), a lowercase UUID. It is optional, and recorded only with `"live": true`: a show app that
+  sends none still switches the site, it only gets no Plan B. `PUT /api/admin/live` keeps the
+  instance the show app named, so switching off and on from `/admin/` mid-show gives Plan B back.
 - `source` is `"show"` or `"admin"`, after whichever made the change. Only a logged-in admin sees
   it, and when it happened: the public endpoint says whether a show is running, which `/` shows
   anyway, and nothing else.
@@ -83,7 +91,7 @@ show app switches automatically and `/admin/` switches by hand.
 - The state is one JSON file, written atomically. A fresh host starts with no show running.
 - `/` checks the state on load, every 5 s and when the phone brings the page back to the
   foreground. If the API cannot be reached it shows the tutorial: during a show, an outage must
-  never hide the reconnection help.
+  never hide the reconnection help. It shows the Plan B button only when `planB` is true.
 
 The show app runs on ennemi-brain, where `www.ennemi.net` resolves to brain itself, so it reaches
 the VPS over Tailscale instead. nginx on the VPS answers the `ennemi-vps` name to tailnet addresses
@@ -92,8 +100,28 @@ only:
 ```sh
 curl -X PUT http://ennemi-vps/api/live \
   -H "Authorization: Bearer $SHOW_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"live": true}'
+  -d '{"live": true, "instanceId": "0192f3a4-5b6c-7d8e-9f01-23456789abcd"}'
 ```
+
+### Plan B
+
+For a phone that still reaches this site during a show, however hard its owner tried the tutorial
+(a VPN that cannot be turned off, a locked-down phone). The button at the bottom of the tutorial
+sends `POST /api/planb`, which answers with a cookie, `ennemi_planb=<instanceId>`, and the page
+reloads. From then on nginx on the VPS forwards that phone to the show app on ennemi-brain, over
+the tailnet: VPN, then the VPS, then brain.
+
+- nginx asks `GET /api/planb/check` about every request carrying the cookie (`auth_request`). The
+  state is kept in memory for that, since the API is its only writer.
+- Once the cookie is not the running instance's any more (the show stopped, another one started),
+  nginx clears it and redirects to the same address, so the phone gets this site again.
+- Only the audience side of the show app is forwarded: `/`, `/_nuxt/`, `/images/`, `/audio/`, the
+  socket with `?domain=user` and the video's WHEP offer. Everything else is answered by this site,
+  so Control, Stage and brain's monitoring are never reachable through it.
+- "Au risque de ne pas avoir certaines fonctionnalités": the live video usually fails, because its
+  WebRTC media goes straight between the phone and brain, and nothing relays it.
+- The nginx side (`conf.d/ennemi-web-planb.conf` and `sites/ennemi-web-tls`) lives in
+  `ennemi-infra`, like the rest of the host. The cookie's name and `Path` appear in both repos.
 
 ### Secrets
 
@@ -141,7 +169,9 @@ The nginx sites are in `roles/nginx/files/sites/` in `ennemi-infra`:
   - It caches `/assets/` forever, images, video and audio for a day, and revalidates HTML on every
     request.
   - It serves the `.br` and `.gz` files this build writes via `brotli_static`/`gzip_static`.
-  - It proxies `/api/` to the API on `127.0.0.1:8787`, rate-limiting writes.
+  - It proxies `/api/` to the API on `127.0.0.1:8787`, rate-limiting writes (but not
+    `POST /api/planb`, which a crowd behind one carrier address may press at once).
+  - It forwards [Plan B](#plan-b) phones to ennemi-brain over the tailnet.
 - `ennemi-web-tailnet`: port 80 for the `ennemi-vps` name, to tailnet addresses only. It serves the
   same site and API for the show app on ennemi-brain.
 

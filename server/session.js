@@ -4,6 +4,7 @@
 // stored server-side, so sessions survive a restart or a deploy, and changing the password
 // invalidates every session at once.
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { readCookie } from './cookies.js';
 
 export const COOKIE_NAME = 'ennemi_admin';
 const COOKIE_PATH = '/api/admin';
@@ -45,11 +46,7 @@ export function createSessions({ password, ttlMs, now }) {
  * @returns {string|null}
  */
 export function readSessionCookie(header) {
-  for (const part of (header ?? '').split(';')) {
-    const [name, ...value] = part.trim().split('=');
-    if (name === COOKIE_NAME) return value.join('=');
-  }
-  return null;
+  return readCookie(header, COOKIE_NAME);
 }
 
 /**

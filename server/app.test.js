@@ -7,6 +7,9 @@ import { join } from 'node:path';
 import { createHandler } from './app.js';
 
 const SHOW_TOKEN = 'test-show-token-0123456789';
+// Two spectacle instance ids, shaped like the show app's uuidv7().
+const INSTANCE = '0192f3a4-5b6c-7d8e-9f01-23456789abcd';
+const NEXT_INSTANCE = '0192f3a5-0000-7000-8000-000000000001';
 const ADMIN_PASSWORD = 'ennemi';
 const TTL_MS = 60_000;
 
@@ -65,6 +68,18 @@ function putAdmin(base, cookie, body, type = 'application/json') {
   return fetch(`${base}/api/admin/live`, { method: 'PUT', headers, body: json(body) });
 }
 
+async function publicState(base) {
+  return (await fetch(`${base}/api/live`)).json();
+}
+
+function openPlanB(base, headers = {}) {
+  return fetch(`${base}/api/planb`, { method: 'POST', headers });
+}
+
+function checkPlanB(base, cookie, method = 'GET') {
+  return fetch(`${base}/api/planb/check`, { method, headers: cookie ? { Cookie: cookie } : {} });
+}
+
 describe('ennemi-web-api', () => {
   let stateDir;
   let server;
@@ -81,11 +96,11 @@ describe('ennemi-web-api', () => {
   });
 
   describe('public', () => {
-    test('starts not live, says nothing more, and says not to cache it', async () => {
+    test('starts not live, with no Plan B, says nothing more, and says not to cache it', async () => {
       const res = await fetch(`${base}/api/live`);
       assert.equal(res.status, 200);
       assert.equal(res.headers.get('cache-control'), 'no-store');
-      assert.deepEqual(await res.json(), { live: false });
+      assert.deepEqual(await res.json(), { live: false, planB: false });
     });
 
     test('answers 404 and 405 for anything else', async () => {
@@ -109,8 +124,9 @@ describe('ennemi-web-api', () => {
       const state = await res.json();
       assert.equal(state.live, true);
       assert.equal(state.source, 'show');
+      assert.equal(state.instanceId, null);
       assert.ok(Date.parse(state.updatedAt));
-      assert.deepEqual(await (await fetch(`${base}/api/live`)).json(), { live: true });
+      assert.deepEqual(await publicState(base), { live: true, planB: false });
     });
 
     test('refuses a missing or wrong token, and the admin password', async () => {
@@ -126,6 +142,13 @@ describe('ennemi-web-api', () => {
       assert.equal((await putShow(base, {})).status, 400);
       assert.equal((await putShow(base, 'live=true', { type: 'application/x-www-form-urlencoded' })).status, 415);
       assert.equal((await putShow(base, { live: true, pad: 'x'.repeat(2000) })).status, 413);
+    });
+
+    test('refuses an instance id that is not a lowercase UUID', async () => {
+      assert.equal((await putShow(base, { live: true, instanceId: 'angry-panda' })).status, 400);
+      assert.equal((await putShow(base, { live: true, instanceId: INSTANCE.toUpperCase() })).status, 400);
+      assert.equal((await putShow(base, { live: true, instanceId: 42 })).status, 400);
+      assert.equal((await putShow(base, { live: false, instanceId: 'x' })).status, 400);
     });
   });
 
@@ -159,7 +182,7 @@ describe('ennemi-web-api', () => {
       const res = await adminState(base, await loginCookie(base));
       assert.equal(res.status, 200);
       const state = await res.json();
-      assert.deepEqual(Object.keys(state).sort(), ['live', 'source', 'updatedAt']);
+      assert.deepEqual(Object.keys(state).sort(), ['instanceId', 'live', 'source', 'updatedAt']);
     });
 
     test('a session switches it, recorded as "admin"', async () => {
@@ -211,11 +234,95 @@ describe('ennemi-web-api', () => {
     });
   });
 
+  describe('plan B', () => {
+    const cookieOf = (instanceId) => `ennemi_planb=${instanceId}`;
+
+    test('is closed with no show, and with a show that names no instance', async () => {
+      await putShow(base, { live: false });
+      assert.equal((await openPlanB(base)).status, 409);
+
+      await putShow(base, { live: true });
+      assert.deepEqual(await publicState(base), { live: true, planB: false });
+      const res = await openPlanB(base);
+      assert.equal(res.status, 409);
+      assert.equal(res.headers.get('set-cookie'), null);
+    });
+
+    test('opens for the instance the show app names, with an HttpOnly, SameSite=Lax cookie on /', async () => {
+      const put = await putShow(base, { live: true, instanceId: INSTANCE });
+      assert.equal((await put.json()).instanceId, INSTANCE);
+      assert.deepEqual(await publicState(base), { live: true, planB: true });
+
+      const res = await openPlanB(base);
+      assert.equal(res.status, 204);
+      assert.equal(res.headers.get('cache-control'), 'no-store');
+      const cookie = res.headers.get('set-cookie');
+      assert.match(cookie, new RegExp(`^ennemi_planb=${INSTANCE}; `));
+      assert.match(cookie, /; Path=\/;/);
+      assert.match(cookie, /; HttpOnly/);
+      assert.match(cookie, /; SameSite=Lax/);
+      assert.match(cookie, /; Max-Age=43200/);
+      assert.doesNotMatch(cookie, /Secure/);
+    });
+
+    test('the cookie is Secure when the client is on https', async () => {
+      const res = await openPlanB(base, { 'X-Forwarded-Proto': 'https' });
+      assert.match(res.headers.get('set-cookie'), /; Secure$/);
+    });
+
+    test('the check accepts the running instance only', async () => {
+      await putShow(base, { live: true, instanceId: INSTANCE });
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE))).status, 204);
+      assert.equal((await checkPlanB(base, `lennemi_uid=abc; ${cookieOf(INSTANCE)}`)).status, 204);
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE), 'HEAD')).status, 204);
+      assert.equal((await checkPlanB(base)).status, 401);
+      assert.equal((await checkPlanB(base, cookieOf(NEXT_INSTANCE))).status, 401);
+      assert.equal((await checkPlanB(base, 'ennemi_planb=')).status, 401);
+      assert.equal((await fetch(`${base}/api/planb/check`, { method: 'POST' })).status, 405);
+    });
+
+    test('a Stop, or the next Play, ends the cookie', async () => {
+      await putShow(base, { live: true, instanceId: INSTANCE });
+      await putShow(base, { live: false, instanceId: INSTANCE });
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE))).status, 401);
+      assert.equal((await openPlanB(base)).status, 409);
+
+      await putShow(base, { live: true, instanceId: NEXT_INSTANCE });
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE))).status, 401);
+      assert.equal((await checkPlanB(base, cookieOf(NEXT_INSTANCE))).status, 204);
+    });
+
+    test('an admin switch keeps the instance: off closes Plan B, on opens it again', async () => {
+      await putShow(base, { live: true, instanceId: INSTANCE });
+      const session = await loginCookie(base);
+
+      await putAdmin(base, session, { live: false });
+      assert.deepEqual(await publicState(base), { live: false, planB: false });
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE))).status, 401);
+
+      const res = await putAdmin(base, session, { live: true });
+      assert.equal((await res.json()).instanceId, INSTANCE);
+      assert.equal((await checkPlanB(base, cookieOf(INSTANCE))).status, 204);
+      assert.equal((await (await adminState(base, session)).json()).instanceId, INSTANCE);
+    });
+
+    test('the instance survives a restart', async () => {
+      await putShow(base, { live: true, instanceId: INSTANCE });
+      const restarted = await listen(stateDir);
+      try {
+        assert.deepEqual(await publicState(restarted.base), { live: true, planB: true });
+        assert.equal((await checkPlanB(restarted.base, cookieOf(INSTANCE))).status, 204);
+      } finally {
+        await close(restarted.server);
+      }
+    });
+  });
+
   test('the state survives a restart', async () => {
     await putShow(base, { live: true });
     const restarted = await listen(stateDir);
     try {
-      assert.deepEqual(await (await fetch(`${restarted.base}/api/live`)).json(), { live: true });
+      assert.deepEqual(await publicState(restarted.base), { live: true, planB: false });
     } finally {
       await close(restarted.server);
     }

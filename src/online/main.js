@@ -1,4 +1,5 @@
 import { startLiveSwitch } from './live.js';
+import { startPlanB } from './planb.js';
 
 // Carousel state
 let currentSlide = 0;
@@ -171,6 +172,7 @@ function handleSwipe() {
 // is ready the moment the live switch reveals it.
 function start() {
   init();
+  startPlanB();
   startLiveSwitch();
 }
 

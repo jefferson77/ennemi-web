@@ -213,6 +213,22 @@
           </div>
         </div>
       </div>
+
+      <!-- Plan B, for whoever still cannot get onto the venue network: the show app through this
+           server (src/online/planb.js). src/online/live.js shows it only while the show has one. -->
+      <div id="planb" class="max-w-lg mx-auto mt-10 mb-4 text-center" hidden>
+        <button
+          id="planbButton"
+          type="button"
+          class="bg-orange-500 text-white text-lg font-semibold rounded-full px-10 py-3 shadow-md hover:bg-orange-600 active:bg-orange-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Plan B
+        </button>
+        <p class="text-sm text-gray-600 mt-3">
+          J'ai essayé, j'ai pas réussi, j'utilise le Plan B, au risque de ne pas avoir certaines fonctionnalités
+        </p>
+        <p id="planbMessage" class="text-sm text-red-700 mt-2" role="status"></p>
+      </div>
     </div>
 
     <!-- JavaScript -->
