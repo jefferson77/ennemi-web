@@ -12,47 +12,32 @@
 //   PUT  /api/admin/live     session cookie  <- {"live": true|false}, -> the new state
 //   GET  /api/healthz        public          -> ok
 //
+//   GET  /api/doomscroll/versions          public          -> {versions: [{id, name, savedAt, saves}]}
+//   GET  /api/doomscroll/version?id=...    public          -> {id, name, savedAt, saves, text, settings}
+//   PUT  /api/admin/doomscroll/version     session cookie  <- {id?, base?, force?, name, text, settings}
+//   POST /api/admin/doomscroll/archive     session cookie  <- {"id": "..."}
+//
+// The Doomscroll routes store the text versions of /doomscroll/ (see doomscroll.js and versions.js).
+// Writing them takes the /admin password, so their write routes sit under /api/admin/, where its
+// cookie goes.
+//
 // The admin password is accepted at /api/admin/login only, which nginx rate-limits. Plan B is
 // described in planb.js.
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { HttpError, readJsonBody, send } from './http.js';
 import { createStateStore, isInstanceId } from './state.js';
 import { createSessions, readSessionCookie, sessionCookie } from './session.js';
 import { PLANB_TTL_MS, holdsPlanB, isPlanBActive, planbCookie } from './planb.js';
+import { createVersionStore } from './versions.js';
+import { doomscrollRoutes } from './doomscroll.js';
 
-const MAX_BODY_BYTES = 1024;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
-
-class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
 
 // Hashing first gives both sides the same length, which timingSafeEqual requires, so neither
 // the content nor the length of a secret leaks through response timing.
 function sameSecret(given, expected) {
   const digest = (value) => createHash('sha256').update(value).digest();
   return timingSafeEqual(digest(given), digest(expected));
-}
-
-async function readJsonBody(req) {
-  if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) {
-    throw new HttpError(415, 'expected application/json');
-  }
-  if (Number(req.headers['content-length'] ?? 0) > MAX_BODY_BYTES) throw new HttpError(413, 'body too large');
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of req) {
-    size += chunk.length;
-    if (size > MAX_BODY_BYTES) throw new HttpError(413, 'body too large');
-    chunks.push(chunk);
-  }
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  } catch {
-    throw new HttpError(400, 'invalid JSON');
-  }
 }
 
 async function readLive(req) {
@@ -70,22 +55,6 @@ function readInstanceId(body) {
     throw new HttpError(400, '"instanceId" must be a lowercase UUID');
   }
   return body.live ? instanceId : null;
-}
-
-function send(res, status, body) {
-  const headers = {
-    // The state changes at any moment: no browser, proxy or CDN may keep a copy.
-    'Cache-Control': 'no-store',
-  };
-  if (body === undefined) {
-    res.writeHead(status, headers);
-    res.end();
-    return;
-  }
-  const json = typeof body !== 'string';
-  headers['Content-Type'] = json ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8';
-  res.writeHead(status, headers);
-  res.end(json ? JSON.stringify(body) : body);
 }
 
 function clientAddress(req) {
@@ -124,7 +93,7 @@ function planBRoutes({ store, log }) {
 
 /**
  * @param {object} options
- * @param {string} options.stateDir - Where state.json lives
+ * @param {string} options.stateDir - Where state.json and the Doomscroll versions live
  * @param {string} options.showToken - Secret of the show app, recorded as source "show"
  * @param {string} options.adminPassword - Password of the /admin page, recorded as source "admin"
  * @param {(line: string) => void} [options.log] - One line per state change, login or refusal
@@ -141,6 +110,7 @@ export function createHandler({
 }) {
   const sessions = createSessions({ password: adminPassword, ttlMs: sessionTtlMs, now });
   const store = createStateStore(stateDir);
+  const versions = createVersionStore(stateDir, { now });
 
   function refuse(req, status, message) {
     log(`refused ${req.method} ${req.url} from ${clientAddress(req)}: ${message}`);
@@ -216,6 +186,7 @@ export function createHandler({
     '/api/healthz': {
       GET: async (req, res) => send(res, 200, 'ok\n'),
     },
+    ...doomscrollRoutes({ versions, requireSession, log }),
   };
 
   return async function handle(req, res) {
