@@ -46,15 +46,39 @@ server/                  the live-state API: Node 26, no dependencies
 public/images/           carousel screenshots, served at /images/
 public/morceau/video/    trailer clips, .mp4 for Apple WebKit and .webm (with alpha) elsewhere
 public/morceau/audio/    the sound-check audio
+public/doomscroll/       the team's Doomscroll pages, self-contained HTML: index.html is the phone
+                         test page, edition/ the writing page, audio/ the music (see below)
 scripts/                 compress, deploy, quality gate, clip conversion
 ```
 
 Files under `public/` are copied verbatim to `dist/` at the same path; everything the HTML pulls
 from `src/` is bundled into hashed `dist/assets/` files.
 
-`/morceau` and `/admin` (no slash) answer a 308 to the same path with a slash, because relative paths
+`/morceau`, `/admin` and `/doomscroll` (no slash) answer a 308 to the same path with a slash, because relative paths
 in a page only resolve under its directory. The Vite dev and preview servers do it with a small
 plugin in `vite.config.js`; in production nginx does it.
+
+## Doomscroll versions
+
+`/doomscroll/edition/` is where the team writes the Doomscroll sequence; `/doomscroll/` plays a
+version on a phone, picked on its sound-check screen (or `?v=<id>`). Both are single HTML files
+under `public/`, served verbatim and outside eslint and prettier, like the other files there. The
+texts they share are kept by the same API:
+
+| Route                                | Needs              | Does                                                 |
+| ------------------------------------ | ------------------ | ---------------------------------------------------- |
+| `GET /api/doomscroll/versions`       | none               | answers `{"versions": [{id, name, savedAt, saves}]}` |
+| `GET /api/doomscroll/version?id=...` | none               | answers one version, with its `text` and `settings`  |
+| `PUT /api/admin/doomscroll/version`  | the session cookie | sends `{id?, base?, force?, name, text, settings}`   |
+| `POST /api/admin/doomscroll/archive` | the session cookie | sends `{"id"}`, hides the version from the list      |
+
+- Writing takes the `/admin` password: the routes sit under `/api/admin/`, where its cookie goes.
+- No `id` creates a version. With an `id`, `base` is the `savedAt` the page started from; if
+  someone saved since, the answer is 409 with the newer save, unless `force` is true.
+- Each save is a new file, `$STATE_DIR/doomscroll/<id>/<savedAt>.json`: nothing is overwritten,
+  and the older files are the version's history. Archiving writes an `archived` marker beside
+  them. Deleting a version for good is done by hand on the host.
+- A save may be up to 256 KB, so nginx lets bodies of that size through on that one route.
 
 ## Live state
 

@@ -34,7 +34,7 @@ function trailingSlash(paths) {
 const apiProxy = { '/api': 'http://127.0.0.1:8787' };
 
 export default defineConfig({
-  plugins: [tailwindcss(), trailingSlash(['/morceau', '/admin'])],
+  plugins: [tailwindcss(), trailingSlash(['/morceau', '/admin', '/doomscroll', '/doomscroll/edition'])],
   server: { port: 5173, proxy: apiProxy },
   preview: { port: 4173, proxy: apiProxy },
   build: {

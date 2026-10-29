@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Doomscroll Édition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* V2 : l'éditeur en lignes à gauche (une phrase par ligne, +/- dans leur colonne), le bilan par section à droite, les deux synchronisés. */
+:root {
+  --bg: #eceef2;
+  --panel: #ffffff;
+  --fg: #15171c;
+  --muted: #5b6270;
+  --line: #d6dae2;
+  --rule: #e6e9ef;
+  --track: #e4e7ed;
+  --accent: #d92a5b;
+  --accent-soft: #fbe3ea;
+  --anchor: #1f55b5;
+  --top: #127a52;
+  --top-strong: #0a4f35;
+  --top-ink: #ffffff;
+  --mid: #c9e8d8;
+  --mid-ink: #0e5c3d;
+  --low: #9aa1ae;
+  --anchor-soft: #e2ecfb;
+  --focus-row: #fff7d6;
+  --insec: #f6f8fb;
+  --ok: #1d7f49;
+  --ok-soft: #dff2e7;
+  --over: #b3371f;
+  --over-soft: #f8e1db;
+  --f-post: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-ui: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --panel: #1a1d23; --fg: #e8eaef; --muted: #9aa1ae; --line: #2d323b; --rule: #252931; --track: #262a32;
+    --accent: #ff5c87; --accent-soft: #3a1a25; --top: #3ccf8e; --top-strong: #8ff5c6; --top-ink: #0b2a1d; --mid: #1d4a35; --mid-ink: #9fe6c4; --low: #6b7280; --anchor: #8fb8ff; --anchor-soft: #19294a; --focus-row: #3a3418; --insec: #1e2229;
+    --ok: #4cc585; --ok-soft: #173326; --over: #ff7a5c; --over-soft: #3b1f19; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --panel: #1a1d23; --fg: #e8eaef; --muted: #9aa1ae; --line: #2d323b; --rule: #252931; --track: #262a32;
+  --accent: #ff5c87; --accent-soft: #3a1a25; --top: #3ccf8e; --top-strong: #8ff5c6; --top-ink: #0b2a1d; --mid: #1d4a35; --mid-ink: #9fe6c4; --low: #6b7280; --anchor: #8fb8ff; --anchor-soft: #19294a; --focus-row: #3a3418; --insec: #1e2229;
+  --ok: #4cc585; --ok-soft: #173326; --over: #ff7a5c; --over-soft: #3b1f19; color-scheme: dark;
+}
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 14px; line-height: 1.45; margin: 0; }
+.wrap { max-width: 1640px; margin: 0 auto; padding-inline: 16px; padding-block: 20px; display: flex; flex-direction: column; gap: 14px; }
+header h1 { font-family: var(--f-post); font-weight: 800; font-stretch: 112%; font-size: 28px; line-height: 1.05; margin: 0; letter-spacing: -.01em; }
+.lede { margin: 4px 0 0; color: var(--muted); max-width: 90ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 13fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.box h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; color: var(--muted); margin: 0; }
+.box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.settings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; }
+.settings .wide { grid-column: 1 / -1; }
+.settings h3 { grid-column: 1 / -1; margin: 6px 0 0; font-size: 12px; font-weight: 600; color: var(--fg); }
+.settings .check { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); }
+.settings .check input { width: auto; }
+.settings input[type=color] { height: 30px; padding: 2px; }
+.settings label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.settings input { font: 14px var(--f-data); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); width: 100%; box-sizing: border-box; }
+.help { font-size: 12.5px; color: var(--muted); margin: 0; }
+.help code, .help kbd { font-family: var(--f-data); font-size: 11.5px; color: var(--fg); background: var(--bg); padding: 0 4px; border-radius: 4px; }
+input:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: 600 13px var(--f-ui); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button:hover { border-color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 5px 10px; font-weight: 500; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ask { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.ask button.danger { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.warn { font-size: 12.5px; color: var(--over); margin: 0; }
+
+/* ---------- Éditeur en lignes ---------- */
+.ed { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); overflow: auto; min-height: 320px; position: relative; }
+.ed-in { width: max-content; min-width: 100%; }
+.r { display: grid; grid-template-columns: 36px 38px auto auto; justify-content: start; align-items: center; min-height: 25px; border-bottom: 1px solid var(--rule); }
+.r.insec { background: var(--insec); }
+.r .tier { width: 28px; height: 20px; margin-left: 5px; padding: 0; border-radius: 5px; border: 1.5px solid transparent; background: transparent; font: 700 14px/1 var(--f-data); color: var(--muted); cursor: pointer; }
+.r.normal .tier { color: var(--mid-ink); background: var(--mid); }
+.r .tier:hover { border-color: var(--line); }
+.r.solide .tier { color: var(--top-ink); background: var(--top); }
+.r.oblig .tier { color: var(--top-ink); background: var(--top-strong); font-size: 12.5px; letter-spacing: -.08em; box-shadow: 0 0 0 1.5px var(--panel), 0 0 0 3px var(--top-strong); }
+.r.oblig .tx { font-weight: 600; }
+.r.faible .tier { color: var(--low); border-color: var(--low); border-style: dashed; }
+.r.faible .tx { color: var(--muted); }
+.r .len { font: 11px var(--f-data); color: var(--muted); text-align: right; padding-right: 8px; font-variant-numeric: tabular-nums; }
+.r .tx { font: 12.5px/1.5 var(--f-data); color: var(--fg); background: transparent; border: 0; padding: 2px 6px; margin: 0; min-width: 24ch; box-sizing: content-box; }
+.r .tx:focus { outline: none; }
+.r:focus-within { background: var(--focus-row); }
+.r.anc { background: var(--anchor-soft); border-bottom-color: color-mix(in srgb, var(--anchor) 25%, transparent); }
+.r.anc .tier { color: var(--anchor); background: transparent; cursor: default; }
+.r.anc .tier:hover { border-color: transparent; }
+.r.anc .tx { color: var(--anchor); font-weight: 600; }
+/* Les réglages d'encre d'une section, au bout de sa ligne d'ancre. */
+.inkc { display: none; align-items: center; gap: 6px; padding: 2px 8px 2px 4px; font: 11.5px var(--f-ui); color: var(--anchor); white-space: nowrap; }
+.r.anc .inkc { display: inline-flex; }
+.inkc select, .inkc input { font: 11.5px var(--f-data); color: var(--fg); background: var(--panel); border: 1px solid color-mix(in srgb, var(--anchor) 35%, transparent); border-radius: 5px; padding: 1px 4px; }
+.inkc input { width: 4.2em; }
+.inkc input:disabled, .inkc select:disabled { opacity: .4; }
+.inkc label { display: inline-flex; align-items: center; gap: 3px; }
+.r.anc:focus-within { background: color-mix(in srgb, var(--anchor-soft) 70%, var(--focus-row)); }
+.r.blank .tier { opacity: .35; background: transparent; }
+.r.opening .tx { color: var(--muted); font-style: italic; }
+.r.opening .len::before { content: "▶ "; }
+.raw { width: 100%; box-sizing: border-box; min-height: 320px; resize: none; font: 12.5px/1.5 var(--f-data); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; white-space: pre; overflow: auto; }
+
+/* ---------- Bilan ---------- */
+.total { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fig { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fig .lab { font-size: 12px; color: var(--muted); }
+.fig .val { font-family: var(--f-data); font-size: 22px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fig .val small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.val.short { color: var(--over); }
+.secs { display: flex; flex-direction: column; gap: 8px; }
+.sec { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; cursor: pointer; scroll-margin-top: 16px; transition: box-shadow .15s, border-color .15s; }
+.sec:hover { border-color: var(--muted); }
+.sec.on { border-color: var(--anchor); box-shadow: 0 0 0 2px var(--anchor); }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.span { font-family: var(--f-data); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--anchor); }
+.span small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.mood { font-family: var(--f-post); font-weight: 650; font-size: 14.5px; line-height: 1.3; text-wrap: balance; }
+.verdict { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px; padding: 2px 10px; border-radius: 99px; }
+.verdict.ok { color: var(--ok); background: var(--ok-soft); }
+.verdict.short { color: var(--over); background: var(--over-soft); } /* il manque : la roue tournera, c'est l'alerte */
+.verdict.over { color: var(--muted); background: var(--track); } /* en trop : les sauts l'absorbent, rien d'alarmant */
+.bars { display: grid; grid-template-columns: 64px minmax(0, 1fr) 56px; gap: 4px 10px; align-items: center; font-size: 12px; }
+.bars .k { color: var(--muted); }
+.bars .n { font-family: var(--f-data); font-variant-numeric: tabular-nums; text-align: right; }
+.track { position: relative; height: 9px; border-radius: 4px; background: var(--track); overflow: hidden; }
+.fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; }
+.fill.avail { background: var(--fg); opacity: .55; }
+.fill.read { display: flex; gap: 2px; background: transparent; }
+.fill.read span { height: 100%; }
+.fill.read span:first-child { border-radius: 4px 0 0 4px; }
+.fill.read span:last-child { border-radius: 0 4px 4px 0; }
+.t-oblig { background: var(--top-strong); }
+.t-solide { background: var(--top); }
+.t-normal { background: var(--top); opacity: .45; }
+.t-faible { background: repeating-linear-gradient(135deg, var(--low) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 0 1px var(--low); }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.meta b { color: var(--fg); font-weight: 600; font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.meta .sort { margin-left: auto; font-size: 12px; padding: 3px 9px; font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 8px; border-radius: 2px; display: inline-block; }
+.empty { color: var(--muted); font-size: 13px; }
+.inkline { font-size: 12px; color: var(--anchor); }
+
+/* ---------- Versions ---------- */
+.vbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
+.vbar label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.vbar select, .vbar input { font: 14px var(--f-ui); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.vbar select { min-width: 16em; max-width: 100%; }
+.vbar input.vname { width: 18em; max-width: 100%; }
+.vbar .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button:disabled { opacity: .45; cursor: default; }
+a.btn { font: 600 13px var(--f-ui); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; }
+a.btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.vstate { font-size: 12.5px; color: var(--muted); }
+.vstate.dirty { color: var(--over); font-weight: 600; }
+.vstate.ok { color: var(--ok); }
+.vask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--bg); }
+.vask input { font: 14px var(--f-ui); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+.vask .err { color: var(--over); }
+.lede a { color: inherit; }
+
+/* Grand écran : la colonne du texte reste en place, la page fait défiler les sections. */
+@media (min-width: 861px) and (min-height: 600px) {
+  .grid > .col:first-child { position: sticky; top: 12px; height: calc(100vh - 24px); height: calc(100dvh - 24px); }
+  .grid > .col:first-child > .box { flex: 1; min-height: 0; }
+  .ed, .raw { flex: 1; min-height: 0; }
+}
+@media (max-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .ed, .raw { max-height: 70vh; }
+  .total { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Doomscroll Édition</h1>
+    <p class="lede">L'endroit où on écrit le Doomscroll. Chaque version sauvée ici se teste sur <a href="/doomscroll/" target="_blank" rel="noopener">la page téléphone</a>, où on la choisit sur l'écran des oiseaux.</p>
+  </header>
+
+  <section class="box" aria-label="Versions">
+    <div class="vbar">
+      <label>Version<select id="vSel"><option>Chargement…</option></select></label>
+      <label>Nom<input class="vname" id="vName" maxlength="80" autocomplete="off" spellcheck="false"></label>
+      <div class="acts">
+        <button type="button" class="primary" id="vSave" title="Ctrl/⌘ S">Sauver</button>
+        <button type="button" id="vNew">Sauver comme nouvelle version</button>
+        <button type="button" id="vArchive">Archiver</button>
+        <a class="btn" id="vTest" href="/doomscroll/" target="_blank" rel="noopener">Tester sur le téléphone ↗</a>
+      </div>
+    </div>
+    <div class="vstate" id="vState" aria-live="polite"></div>
+    <div class="vask" id="vAsk" hidden></div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="box">
+        <div class="box-head">
+          <h2>Textes des posts</h2>
+          <div class="seg" role="group" aria-label="Affichage du texte">
+            <button type="button" id="modeRows" aria-pressed="true">Lignes</button>
+            <button type="button" id="modeRaw" aria-pressed="false">Texte brut</button>
+          </div>
+        </div>
+        <p class="help" id="helpRows">Une phrase par ligne. La pastille de gauche donne le type : <b>++</b> obligatoire (jamais sauté, même très en retard), <b>+</b> solide, <b>·</b> normal, <b>−</b> faible (clic pour changer, ou tape <kbd>+</kbd>, <kbd>++</kbd> ou <kbd>-</kbd> en début de ligne). Le chiffre, c'est le nombre de caractères. Une ligne qui commence par <code>@1:24</code> est une ancre (en bleu) ; au bout, les réglages d'encre de sa section (vide = auto). <kbd>Entrée</kbd> nouvelle ligne · <kbd>⌥/Alt ↑↓</kbd> déplacer la ligne · <kbd>Ctrl/⌘ Z</kbd> annuler. Le mode « Texte brut » sert à copier ou coller tout d'un bloc.</p>
+        <p class="help" id="helpRaw" hidden>Même syntaxe que la mock-up : <code>++</code> devant = obligatoire, <code>+</code> = solide, <code>-</code> = faible, rien = normal, <code>@1:24</code> seul sur sa ligne = ancre. L'encre d'une section se règle entre crochets au bout de son ancre : <code>[sans encre]</code>, <code>[traînée seule ×4]</code>, <code>[traînée ×4, coulures ×3]</code>. Repasse en « Lignes » pour retrouver les colonnes.</p>
+        <div class="ed" id="ed" role="list" aria-label="Textes des posts, une ligne par post"><div class="ed-in" id="edIn"></div></div>
+        <textarea class="raw" id="raw" spellcheck="false" wrap="off" hidden aria-label="Textes des posts, en texte brut"></textarea>
+                <div id="warns"></div>
+      </section>
+    </div>
+
+    <div class="col" aria-live="polite">
+      <section class="box">
+        <h2>Réglages</h2>
+        <div class="settings">
+          <h3>Minutage</h3>
+          <label>Forfait par swipe (s)<input type="number" id="forfait" min="0" step="0.05" inputmode="decimal"></label>
+          <label>Temps par caractère (s)<input type="number" id="perChar" min="0" step="0.005" inputmode="decimal"></label>
+          <label>Fin, sans ancre de fin (s)<input type="number" id="duration" min="1" step="1" inputmode="numeric"></label>
+          <label>Avance tolérée (s)<input type="number" id="ahead" min="0" step="0.5" inputmode="decimal"></label>
+          <label>Retard toléré (s)<input type="number" id="late" min="0" step="0.5" inputmode="decimal"></label>
+          <label class="check"><input type="checkbox" id="metronome">Métronome si le morceau ne charge pas</label>
+          <h3>Dégoulinures</h3>
+          <label class="check wide"><input type="checkbox" id="ink">De l'encre sur les posts</label>
+          <label>Coulures, 1re section (×)<input type="number" id="inkStart" min="0.5" step="0.5" inputmode="decimal"></label>
+          <label>Coulures, dernière section (×)<input type="number" id="inkEnd" min="0.5" step="0.5" inputmode="decimal"></label>
+          <label>Plafond de la traînée<input type="number" id="inkCap" min="0" max="1" step="0.05" inputmode="decimal"></label>
+          <label>Nombre de coulures<input type="number" id="inkDrips" min="0" max="20" step="1" inputmode="numeric"></label>
+          <label>Teinte de l'encre<input type="color" id="inkColor"></label>
+          <label class="check"><input type="checkbox" id="inkIntro">Encre aussi pendant l'intro</label>
+        </div>
+        <p class="help" id="endNote"></p>
+        <p class="help">Vitesse = combien de fois le temps de lecture du post. Coulures : la plus rapide touche le bas. Traînée : elle atteint son plafond (0,67 = deux tiers de l'écran). Une section en « auto » prend un dégradé entre les deux valeurs ci-dessus pour les coulures, et le double pour la traînée. Ces réglages font partie de la version.</p>
+      </section>
+      <section class="box">
+        <h2>Ensemble</h2>
+        <div class="total" id="total"></div>
+      </section>
+      <div class="legend">
+        <span><i style="background:var(--fg);opacity:.55"></i>temps laissé par la musique</span>
+        <span><i class="t-oblig"></i>des ++ (obligatoires)</span>
+        <span><i class="t-solide"></i>lecture des + (top)</span>
+        <span><i class="t-normal"></i>des normaux</span>
+        <span><i class="t-faible"></i>des − (moins bien)</span>
+      </div>
+      <p class="help">Clique une section pour sauter à son ancre dans le texte.</p>
+      <div class="secs" id="secs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+const DEMO = `Culbute d'un chat surpris par un concombre
+@0:00 Guilleret
++ Deux enfants habillés en dinosaures attendent leur grand mère à l’aéroport, elle sort du terminal déguisée elle aussi en dinosaure
++ Deux loutres se tiennent la main en dormant pour ne pas dériver
++ Père de famille rattrapant in extremis un bébé tombant d'un canapé
+Golden retriever qui refuse de sortir de la piscine malgré les supplications de toute la famille
++ Hérisson qui mange une fraise en la tenant entre ses petites pattes
++ Fanfare de quartier qui joue un tube de l'été devant une boulangerie
+- Recette de pâtes au citron en quarante secondes, filmée du dessus, sur une musique lo-fi
+Petit garçon qui voit la mer pour la première fois et se met à rire sans pouvoir s'arrêter
+Avant-après de la rénovation d'une cuisine des années septante
+Canard qui traverse un passage piéton, suivi de onze canetons, escorté par un policier
++ Chiot qui découvre son reflet dans un miroir et lui aboie dessus pendant une minute
++ Bébé qui éclate de rire chaque fois que son père déchire une feuille de papier
++ Chat coincé dans une boîte de mouchoirs bien trop petite pour lui
+Concours de châteaux de sable gagné par une fillette de six ans et sa pelle rouge
+Une tortue essaie en vain d’attraper une mangue accrochée à une branche
+- Perroquet qui chante l'hymne national à tue-tête
+Un grand-père réussit enfin un appel vidéo mais ne filme que son plafond
++ Tutoriel pour plier un drap-housse en moins de dix secondes
++ Coucher de soleil sur une plage filmé par un drone qui recule lentement
+@0:45 Guilleret mais un peu grinçant
++ Le gâteau d'anniversaire s'éclate par terre juste avant la photo
++ Un vieux mec musclé vous enjoint de faire du taï-chi
++ Mariée qui glisse dans la boue en descendant les marches de l'église
++ Mouette qui vole le sandwich d'un touriste
++ Influenceur qui goûte un piment et appelle sa mère
++ Un chat pousse un vase dans le vide, regard caméra
+@0:54 Sourire crispé
++ Formation gratuite pour gagner des followers
++ On arrache le lino pour voir en dessous, c'est tout pourri
++ Classement des dix meilleurs frigos de l'année
+- Chroniqueur télé qui quitte le plateau en claquant la porte
++ Client qui houspille une caissière pour un bon expiré
+Une femme découvre qu’elle va avoir des triplets
+- Repas de famille qui tourne à la dispute politique
+Pourquoi et comment se fixer des objectifs
++ Il fait croire à sa copine que la maison brûle
+Mariage annulé en direct au dernier moment
++ Des voisins se disputent une place de parking
+- Mère qui filme son ado en train de pleurer
+@1:09 Le sourire crispé devient flippant
++ Une meuf dans l'avion pète un boulard sur son voisin
+- Manifestants et policiers face à face devant le parlement
+Des supporters de foot manifestent leur mécontentement
++ Une caméra de surveillance filme un voleur de colis
++ Des parlementaires mexicains en viennent aux main
++ Un dégagement de fumée dans le métro
+Le drone filme le barbecue des voisins
++ Foule qui encercle une voiture
+- Rumeur sur une école du quartier
+@1:24 On rigole plus trop : injonction, surveillance, maximisation
++ Coulée de boue emportant des bâtiment
+Les 7 erreurs à ne pas faire quand on veut investir
++ Révélation de ce qui te bousille l'intestin
+Compilation d'accidents sur l'autoroute
++ Quelqu'un explique comment dormir moins
+@1:30 Ça s'accélère, le contenu se raccourcit
++ Inversion des responsabilités
++ Ce graphique est déprimant
++ Parodie de bon sens
+- Pétition contre un prof
++ Deux poids, deux mesures
+Pente savonneuse
+@1:37 Major shift, plus rien de marrant, catastrophe - deux mots et demi
++ Statistiques foireuses
++ Mensonges éhontés
++ Argument fallacieux
++ Pointage de doigt
+Réaction scandalisée
+Surintérprétation
++ Fausse citation
+Ad hominem
+@1:43 Deux mots
++ Sondage douteux
++ Mauvaise foi
+Postillonage
+Charlatanisme
+Agressivité
+Réprimandes
+@1:48 - One word
++ Accusations
++ Mesquinerie
++ Invectives
++ Protestation
+Intimidation
+Vitupérances
++ Calomnie
+Anathème
+Hypocrisie
++ Menaces
+Injures
+Infamie
+Clash
+Abus
+@1:54 Hits de fin
++ Purée
++ Là
++ C'est quand même
++ bien
++ la meeee
++ eeeee
++ eeeee
++ rde
+@1:60 Fin`;
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+// Les réglages d'une version : les mêmes que ceux de la page téléphone.
+const DEFAULTS = { forfait: 0.5, perChar: 0.025, duration: 122, metronome: true, ahead: 2, late: 3, ink: true, inkStart: 6, inkEnd: 2, inkCap: 0.67, inkDrips: 8, inkIntro: true, inkColor: '#2e2d2b' };
+let cfg = { ...DEFAULTS };
+const nf = (x, d = 1) => x.toFixed(d).replace('.', ',');
+const fmt = s => { const neg = s < 0; s = Math.abs(s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return (neg ? '−' : '') + m + ':' + String(r).padStart(2, '0'); };
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+const ANC = /^@\s*(\d+):(\d{1,2}(?:[.,]\d+)?)(?:\s+(.*))?$/;
+const desktop = matchMedia('(min-width: 861px) and (min-height: 600px)');
+
+/* ---------- Encre d'une section : la même lecture que la page téléphone ---------- */
+const NUM = '(\\d+(?:[.,]\\d+)?)';
+const num = x => parseFloat(x.replace(',', '.'));
+function inkOptions(label) {
+  const ink = { mode: null, band: null, drip: null };
+  const br = label.match(/\s*\[([^\]]*)\]\s*$/);
+  if (br) {
+    const o = br[1].toLowerCase();
+    if (/sans\s+encre/.test(o)) ink.mode = 'none';
+    else if (/seule|sans\s+coulures?/.test(o)) ink.mode = 'band';
+    const b = o.match(new RegExp('tra[iî]n[ée]e[^×x,\\d]*[×x]\\s*' + NUM)), d = o.match(new RegExp('coulures?\\s*[×x]\\s*' + NUM));
+    const both = o.replace(/tra[iî]n[ée]e[^×x,\d]*[×x]\s*[\d.,]+|coulures?\s*[×x]\s*[\d.,]+/g, '').match(new RegExp('[×x]\\s*' + NUM));
+    if (both) ink.drip = num(both[1]);
+    if (b) ink.band = num(b[1]);
+    if (d) ink.drip = num(d[1]);
+    if ((ink.band === 0 || (ink.band == null && ink.drip === 0)) && (ink.drip === 0 || ink.mode === 'band')) ink.mode = 'none';
+    return { label: label.slice(0, br.index).trim(), ink };
+  }
+  const rm = label.match(/(?:^|\s)(?:[×x]\s*(\d+(?:[.,]\d+)?))?\s*(sans\s+coulures?)?\s*$/i);
+  if (!rm || !(rm[1] || rm[2])) return { label, ink };
+  if (rm[1]) ink.drip = num(rm[1]);
+  if (rm[2]) ink.mode = 'band';
+  if (ink.drip === 0) ink.mode = 'none';
+  return { label: label.slice(0, rm.index).trim(), ink };
+}
+// Une ligne « @1:18 » seule est une ancre : le post qui la suit est dû à 1:18.
+const nfx = x => String(x).replace('.', ',');
+// L'inverse : les réglages d'encre remis en crochets au bout de l'ancre (rien si tout est en auto).
+function inkSuffix(ink) {
+  if (ink.mode === 'none') return ' [sans encre]';
+  const parts = [];
+  if (ink.mode === 'band') parts.push('traînée seule' + (ink.band != null ? ' ×' + nfx(ink.band) : ''));
+  else {
+    if (ink.band != null) parts.push('traînée ×' + nfx(ink.band));
+    if (ink.drip != null) parts.push('coulures ×' + nfx(ink.drip));
+  }
+  return parts.length ? ' [' + parts.join(', ') + ']' : '';
+}
+// Une ligne d'ancre en deux : ce qu'on écrit dans le champ (@1:24 étiquette), et ses réglages d'encre.
+function splitAnchor(line) {
+  const a = line.trim().match(ANC);
+  if (!a) return { base: line, ink: { mode: null, band: null, drip: null } };
+  const { label, ink } = inkOptions((a[3] || '').trim());
+  const head = line.trim().slice(0, line.trim().length - (a[3] || '').length).trim();
+  return { base: head + (label ? ' ' + label : ''), ink };
+}
+
+/* ---------- Lecture du texte (même règle que la mock-up) ---------- */
+// Une ligne « @1:14 » seule cale le post suivant ; ln = numéro de ligne (0 = première), qui est aussi l'indice de la ligne dans l'éditeur.
+function parse(text) {
+  const out = [], warns = [];
+  let pending = null, pendingLabel = '', pendingInk = null, pendingLn = null, end = null;
+  text.split(/\r?\n/).forEach((raw, ln) => {
+    let s = raw.trim();
+    if (!s) return;
+    const a = s.match(ANC);
+    if (a) {
+      if (pending != null) warns.push(`Ligne ${ln + 1} : deux ancres de suite, seule la seconde compte.`);
+      pending = +a[1] * 60 + parseFloat(a[2].replace(',', '.'));
+      ({ label: pendingLabel, ink: pendingInk } = inkOptions((a[3] || '').trim())); pendingLn = ln;
+      if (!out.length) { warns.push(`Ligne ${ln + 1} : une ancre avant la première ligne est ignorée.`); pending = null; }
+      return;
+    }
+    let tier = 'normal';
+    if (s.startsWith('++')) { tier = 'oblig'; s = s.slice(2).trim(); }
+    else if (s[0] === '+') { tier = 'solide'; s = s.slice(1).trim(); }
+    else if (s[0] === '-') { tier = 'faible'; s = s.slice(1).trim(); }
+    if (/\s@\s*\d+:\d{1,2}$/.test(s)) warns.push(`Ligne ${ln + 1} : une ancre en fin de ligne n'est pas lue ; mets-la sur sa propre ligne.`);
+    // « + » ou « - » seul : un post vide (écran sans texte), qui ne coûte que le forfait.
+    out.push({ text: s, tier, anchor: pending, label: pending != null ? pendingLabel : '', ink: pending != null ? pendingInk : null, ancLn: pending != null ? pendingLn : null, ln, len: s.length });
+    pending = null;
+  });
+  // Une ancre sans post en dessous marque la fin de la séquence.
+  if (pending != null) end = { t: pending, label: pendingLabel, ln: pendingLn };
+  return { posts: out, warns, end };
+}
+
+function sections(posts, warns, end) {
+  const secs = [];
+  let cur = null;
+  posts.slice(1).forEach(p => {
+    if (!cur) cur = { from: p.anchor != null ? p.anchor : 0, label: p.label, ink: p.ink, start: p.ancLn != null ? p.ancLn : p.ln, posts: [] };
+    else if (p.anchor != null) {
+      if (p.anchor <= cur.from) warns.push(`L'ancre ${fmt(p.anchor)} tombe avant ou sur l'ancre précédente (${fmt(cur.from)}).`);
+      secs.push(cur); cur = { from: p.anchor, label: p.label, ink: p.ink, start: p.ancLn, posts: [] };
+    }
+    cur.posts.push(p);
+  });
+  if (cur) secs.push(cur);
+  secs.forEach((s, k) => {
+    s.to = k + 1 < secs.length ? secs[k + 1].from : (end ? end.t : cfg.duration);
+    s.room = s.to - s.from;
+    const bud = p => cfg.forfait + p.len * cfg.perChar;
+    s.read = { oblig: 0, solide: 0, normal: 0, faible: 0 };
+    s.count = { oblig: 0, solide: 0, normal: 0, faible: 0 };
+    s.chars = 0;
+    s.posts.forEach(p => { s.read[p.tier] += bud(p); s.count[p.tier]++; s.chars += p.len; });
+    s.need = s.read.oblig + s.read.solide + s.read.normal + s.read.faible;
+    // L'encre, comme la calcule la page téléphone.
+    const auto = secs.length > 1 ? cfg.inkStart + (cfg.inkEnd - cfg.inkStart) * k / (secs.length - 1) : cfg.inkStart;
+    const w = s.ink || { mode: null, band: null, drip: null };
+    s.inkK = { mode: cfg.ink ? w.mode || 'both' : 'none', drip: w.drip != null ? w.drip : auto, dripWritten: w.drip != null, band: w.band != null ? w.band : 2 * (w.drip != null ? w.drip : auto), bandWritten: w.band != null };
+    s.avgLen = s.chars / s.posts.length;
+    s.avgBud = cfg.forfait + s.avgLen * cfg.perChar;
+    s.diff = s.room - s.need; // > 0 : il manque de la lecture
+    const lens = s.posts.map(p => p.len);
+    s.desc = lens.every((l, i) => i === 0 || lens[i - 1] >= l);
+  });
+  const E = end ? end.t : cfg.duration;
+  if (secs.length && secs[secs.length - 1].from >= E) warns.push(`La dernière ancre (${fmt(secs[secs.length - 1].from)}) tombe après la fin (${fmt(E)}).`);
+  return secs;
+}
+
+/* ---------- Le modèle : une ligne = { tier, text } ---------- */
+let rows = [];
+let mode = 'rows';
+const MARK = { oblig: '++', solide: '+', faible: '-' };
+function lineToRow(line) {
+  let s = line.trim();
+  if (!ANC.test(s)) {
+    if (s.startsWith('++')) return { tier: 'oblig', text: s.slice(2).trim() };
+    if (s[0] === '+') return { tier: 'solide', text: s.slice(1).trim() };
+    if (s[0] === '-') return { tier: 'faible', text: s.slice(1).trim() };
+  }
+  return { tier: 'normal', text: s };
+}
+const fromText = t => t.split(/\r?\n/).map(lineToRow);
+const rowLine = r => r.tier === 'normal' ? r.text : MARK[r.tier] + (r.text ? ' ' + r.text : '');
+const serialize = () => rows.map(rowLine).join('\n');
+const kindOf = r => r.tier !== 'normal' ? 'post' : !r.text.trim() ? 'blank' : ANC.test(r.text.trim()) ? 'anc' : 'post';
+const currentText = () => mode === 'raw' ? $('raw').value : serialize();
+
+/* ---------- Dessin de l'éditeur ---------- */
+const edIn = $('edIn'), ed = $('ed');
+let opening = -1;
+function findOpening() { opening = rows.findIndex(r => kindOf(r) === 'post'); }
+function paintRow(el, i) {
+  const r = rows[i], k = kindOf(r);
+  el.className = 'r ' + (k === 'anc' ? 'anc' : k === 'blank' ? 'blank' : r.tier) + (i === opening ? ' opening' : '') + (rowSec[i] === active && active >= 0 ? ' insec' : '');
+  const tier = el.firstElementChild, len = tier.nextElementSibling, tx = len.nextElementSibling, inkc = tx.nextElementSibling;
+  tier.textContent = k === 'anc' ? '@' : { oblig: '++', solide: '+', faible: '−', normal: '·' }[r.tier];
+  tier.title = k === 'anc' ? 'Ancre' : { oblig: 'Obligatoire, jamais sauté (clic : faible)', solide: 'Solide (clic : obligatoire)', faible: 'Faible (clic : normal)', normal: 'Normal (clic : solide)' }[r.tier];
+  len.textContent = k === 'post' ? r.text.trim().length : '';
+  const shown = k === 'anc' ? splitAnchor(r.text) : null;
+  const v = shown ? shown.base : r.text;
+  if (tx.value !== v && !(shown && document.activeElement === tx)) tx.value = v; // une ancre en cours de frappe garde ses espaces
+  tx.style.width = Math.max(v.length + 1, 24) + 'ch';
+  if (shown) {
+    const ink = shown.ink, mode = ink.mode || 'both';
+    const [sel, band, drip] = inkc.querySelectorAll('select, input');
+    sel.value = mode;
+    if (document.activeElement !== band) band.value = ink.band != null ? nfx(ink.band) : '';
+    if (document.activeElement !== drip) drip.value = ink.drip != null ? nfx(ink.drip) : '';
+    band.disabled = mode === 'none'; drip.disabled = mode !== 'both';
+  }
+  if (i === opening) tx.title = 'Première ligne : affichée avant la musique, hors compte'; else tx.removeAttribute('title');
+}
+function makeRow() {
+  const el = document.createElement('div');
+  el.setAttribute('role', 'listitem');
+  el.innerHTML = '<button type="button" class="tier" tabindex="-1"></button><span class="len"></span><input class="tx" spellcheck="false" autocomplete="off">'
+    + '<span class="inkc"><select aria-label="Encre de la section"><option value="both">traînée + coulures</option><option value="band">traînée seule</option><option value="none">sans encre</option></select>'
+    + '<label>traînée ×<input inputmode="decimal" placeholder="auto" data-k="band" aria-label="Vitesse de la traînée"></label>'
+    + '<label>coulures ×<input inputmode="decimal" placeholder="auto" data-k="drip" aria-label="Vitesse des coulures"></label></span>';
+  return el;
+}
+function buildRows() {
+  findOpening();
+  while (edIn.children.length < rows.length) edIn.appendChild(makeRow());
+  while (edIn.children.length > rows.length) edIn.lastChild.remove();
+  [...edIn.children].forEach((el, i) => { el.dataset.i = i; paintRow(el, i); });
+}
+const rowEl = i => edIn.children[i];
+const idxOf = el => +el.closest('.r').dataset.i;
+function focusRow(i, caret, scroll = true) {
+  const el = rowEl(Math.max(0, Math.min(i, rows.length - 1)));
+  if (!el) return;
+  const tx = el.querySelector('.tx');
+  tx.focus({ preventScroll: !scroll });
+  const c = caret == null ? tx.value.length : Math.min(caret, tx.value.length);
+  tx.setSelectionRange(c, c);
+}
+
+/* ---------- Historique (annuler / rétablir) ---------- */
+const hist = []; let hpos = -1, lastType = { i: -1, t: 0 };
+function snapshot(kind, i, caret) {
+  const text = serialize(), now = performance.now();
+  if (hpos >= 0 && hist[hpos].text === text) return;
+  hist.splice(hpos + 1);
+  if (kind === 'type' && lastType.i === i && now - lastType.t < 900 && hpos > 0) hist[hpos] = { text, i, caret };
+  else hist.push({ text, i, caret });
+  if (hist.length > 300) hist.shift();
+  hpos = hist.length - 1;
+  lastType = kind === 'type' ? { i, t: now } : { i: -1, t: 0 };
+}
+function restore(step) {
+  const h = hist[hpos + step];
+  if (!h) return;
+  hpos += step; lastType = { i: -1, t: 0 };
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // le champ actif reprend lui aussi le texte annulé
+  rows = fromText(h.text);
+  buildRows(); changed(false);
+  focusRow(h.i, h.caret);
+}
+
+/* ---------- Après chaque modification ---------- */
+let saveTmr, renderTmr;
+function changed(record = true, kind = 'edit', i = -1, caret = 0) {
+  if (record) snapshot(kind, i, caret);
+  clearTimeout(saveTmr); saveTmr = setTimeout(saveDraft, 200);
+  clearTimeout(renderTmr); renderTmr = setTimeout(render, kind === 'type' ? 120 : 0);
+}
+
+/* ---------- Saisie dans les lignes ---------- */
+// Les réglages d'encre d'une ancre changent : on réécrit les crochets au bout de sa ligne.
+function inkEdit(el) {
+  const i = idxOf(el), r = rows[i], { base, ink } = splitAnchor(r.text);
+  const c = el.closest('.inkc'), sel = c.querySelector('select');
+  const val = k => { const x = c.querySelector(`[data-k="${k}"]`).value.trim().replace(',', '.'); return x === '' || !isFinite(+x) || +x < 0 ? null : +x; };
+  ink.mode = sel.value === 'both' ? null : sel.value;
+  ink.band = val('band'); ink.drip = val('drip');
+  if (ink.mode === 'none') { ink.band = ink.drip = null; }
+  if (ink.mode === 'band') ink.drip = null;
+  r.text = base + inkSuffix(ink);
+  paintRow(rowEl(i), i);
+  changed(true, el.tagName === 'SELECT' ? 'edit' : 'type', i, 0);
+}
+edIn.addEventListener('change', e => { if (e.target.closest('.inkc')) inkEdit(e.target); });
+edIn.addEventListener('input', e => {
+  if (e.target.closest('.inkc') && e.target.tagName === 'INPUT') { inkEdit(e.target); return; }
+  if (!e.target.classList.contains('tx')) return;
+  const tx = e.target, i = idxOf(tx), r = rows[i];
+  let v = tx.value, caret = tx.selectionStart;
+  // « + », « ++ » ou « - » tapé en début de ligne : il part dans la colonne de gauche (un « + » de plus sur un solide en fait un obligatoire).
+  const m = !ANC.test(v.trim()) && v.match(/^\s*(\+\+|[+-])\s*/);
+  if (m) { r.tier = m[1] === '++' || (m[1] === '+' && r.tier === 'solide') ? 'oblig' : m[1] === '+' ? (r.tier === 'oblig' ? 'oblig' : 'solide') : 'faible'; v = v.slice(m[0].length); caret = Math.max(0, caret - m[0].length); tx.value = v; tx.setSelectionRange(caret, caret); }
+  else if (r.tier !== 'normal' && /^\s/.test(v)) { const w = v.match(/^\s+/)[0].length; v = v.slice(w); caret = Math.max(0, caret - w); tx.value = v; tx.setSelectionRange(caret, caret); } // l'espace après le + tapé
+  // Sur une ancre, le champ ne montre pas les crochets : on les garde (sauf s'ils viennent d'être tapés).
+  const was = kindOf(r) === 'anc' ? splitAnchor(r.text) : null;
+  r.text = was && ANC.test(v.trim()) && !/\[[^\]]*\]\s*$/.test(v) ? v + inkSuffix(was.ink) : v;
+  const before = opening; findOpening();
+  if (before !== opening) buildRows(); else paintRow(rowEl(i), i);
+  changed(true, 'type', i, caret);
+});
+edIn.addEventListener('click', e => {
+  const b = e.target.closest('.tier');
+  if (!b) return;
+  const i = idxOf(b), r = rows[i];
+  if (kindOf(r) === 'anc') return;
+  r.tier = { normal: 'solide', solide: 'oblig', oblig: 'faible', faible: 'normal' }[r.tier];
+  findOpening(); buildRows();
+  changed(true, 'edit', i, r.text.length);
+  focusRow(i, null, false);
+});
+edIn.addEventListener('keydown', e => {
+  if (!e.target.classList.contains('tx')) return;
+  const tx = e.target, i = idxOf(tx), r = rows[i];
+  const a = tx.selectionStart, b = tx.selectionEnd, mod = e.ctrlKey || e.metaKey;
+  // Entrée sur une ancre : une ligne vide en dessous, sans couper l'ancre (ses crochets sont cachés dans le champ).
+  if (kindOf(r) === 'anc' && e.key === 'Enter') { e.preventDefault(); rows.splice(i + 1, 0, { tier: 'normal', text: '' }); buildRows(); changed(true, 'edit', i + 1, 0); focusRow(i + 1, 0); return; }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const tail = r.text.slice(b); r.text = r.text.slice(0, a);
+    if (a === 0 && tail) { rows.splice(i, 0, { tier: 'normal', text: '' }); r.text = tail; buildRows(); changed(true, 'edit', i + 1, 0); focusRow(i + 1, 0); }
+    else { rows.splice(i + 1, 0, { tier: 'normal', text: tail }); buildRows(); changed(true, 'edit', i + 1, 0); focusRow(i + 1, 0); }
+    return;
+  }
+  if (e.key === 'Backspace' && a === 0 && b === 0) {
+    e.preventDefault();
+    if (r.tier !== 'normal') { r.tier = 'normal'; buildRows(); changed(true, 'edit', i, 0); focusRow(i, 0); return; }
+    if (i === 0) return;
+    const p = rows[i - 1], at = p.text.length;
+    p.text += r.text; rows.splice(i, 1); buildRows(); changed(true, 'edit', i - 1, at); focusRow(i - 1, at);
+    return;
+  }
+  if (e.key === 'Delete' && a === r.text.length && b === a && i + 1 < rows.length) {
+    e.preventDefault();
+    r.text += rows[i + 1].text; rows.splice(i + 1, 1); buildRows(); changed(true, 'edit', i, a); focusRow(i, a);
+    return;
+  }
+  if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.altKey) {
+    e.preventDefault();
+    const j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    if (j < 0 || j >= rows.length) return;
+    [rows[i], rows[j]] = [rows[j], rows[i]]; buildRows(); changed(true, 'edit', j, a); focusRow(j, a);
+    return;
+  }
+  if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); focusRow(i - 1, a); return; }
+  if (e.key === 'ArrowDown' && i + 1 < rows.length) { e.preventDefault(); focusRow(i + 1, a); return; }
+});
+// Annuler / rétablir partout sauf dans le texte brut, les réglages et les versions, qui gardent l'annulation du navigateur.
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveVersion(false); return; }
+  if (mode !== 'rows' || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  if (e.target.closest && e.target.closest('textarea, .settings, .vbar, .vask, .inkc')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z') { e.preventDefault(); restore(e.shiftKey ? 1 : -1); }
+  else if (k === 'y') { e.preventDefault(); restore(1); }
+});
+edIn.addEventListener('paste', e => {
+  if (!e.target.classList.contains('tx')) return;
+  const t = (e.clipboardData || window.clipboardData).getData('text');
+  if (!/\r?\n/.test(t)) return; // une seule ligne : collage normal
+  e.preventDefault();
+  const tx = e.target, i = idxOf(tx), r = rows[i];
+  const before = r.text.slice(0, tx.selectionStart), after = r.text.slice(tx.selectionEnd);
+  const add = fromText(t.replace(/\r?\n$/, ''));
+  const first = add.shift();
+  if (!before.trim() && r.tier === 'normal') r.tier = first.tier;
+  r.text = before + first.text;
+  if (!add.length) { r.text += after; buildRows(); changed(true, 'edit', i, r.text.length - after.length); focusRow(i, r.text.length - after.length); return; }
+  const last = add[add.length - 1], caret = last.text.length; last.text += after;
+  rows.splice(i + 1, 0, ...add); buildRows();
+  changed(true, 'edit', i + add.length, caret); focusRow(i + add.length, caret);
+});
+
+/* ---------- Synchro : la ligne active montre sa section, la section cliquée montre son ancre ---------- */
+let rowSec = [], secStart = [], active = -1;
+function setActive(k, scrollRight) {
+  if (k === active && !scrollRight) return;
+  active = k;
+  document.querySelectorAll('.sec').forEach(el => el.classList.toggle('on', +el.dataset.k === k));
+  if (mode === 'rows') [...edIn.children].forEach((el, i) => el.classList.toggle('insec', k >= 0 && rowSec[i] === k));
+  if (scrollRight && k >= 0 && desktop.matches) {
+    const card = document.querySelector(`.sec[data-k="${k}"]`);
+    if (!card) return;
+    const rc = card.getBoundingClientRect();
+    if (rc.top < 12 || rc.bottom > innerHeight - 12) window.scrollTo({ top: scrollY + rc.top - 16, behavior: 'smooth' });
+  }
+}
+function lineActive(ln) { setActive(ln < rowSec.length ? rowSec[ln] : rowSec[rowSec.length - 1] ?? -1, true); }
+edIn.addEventListener('focusin', e => { if (e.target.classList.contains('tx')) lineActive(idxOf(e.target)); });
+const rawLine = () => { const ta = $('raw'); return ta.value.slice(0, ta.selectionStart).split('\n').length - 1; };
+['keyup', 'click', 'focus'].forEach(t => $('raw').addEventListener(t, () => lineActive(rawLine())));
+$('secs').addEventListener('click', e => {
+  const sortBtn = e.target.closest('.sort');
+  const card = e.target.closest('.sec');
+  if (!card) return;
+  const k = +card.dataset.k;
+  if (sortBtn) { sortSection(k); return; }
+  const ln = secStart[k];
+  setActive(k, false);
+  if (mode === 'rows') {
+    focusRow(ln, null, false);
+    const el = rowEl(ln); if (el) ed.scrollTop = el.offsetTop - 6;
+  } else {
+    const ta = $('raw'), lines = ta.value.split('\n'), pos = lines.slice(0, ln).join('\n').length + (ln ? 1 : 0);
+    ta.focus({ preventScroll: true }); ta.setSelectionRange(pos + lines[ln].length, pos + lines[ln].length);
+    ta.scrollTop = ln * parseFloat(getComputedStyle(ta).lineHeight) - 6;
+  }
+});
+
+/* ---------- Trier une section par longueur (suggestion de Claude) ---------- */
+let lastSecs = [];
+function sortSection(k) {
+  if (mode === 'raw') { rows = fromText($('raw').value); }
+  const s = lastSecs[k]; if (!s) return;
+  const slots = s.posts.map(p => p.ln);
+  const items = slots.map(ln => rows[ln]);
+  const dir = s.desc ? 1 : -1; // déjà des plus longues aux plus courtes : on inverse
+  const sorted = items.map((r, n) => ({ r, n })).sort((x, y) => dir * (x.r.text.trim().length - y.r.text.trim().length) || x.n - y.n).map(o => o.r);
+  slots.forEach((ln, n) => { rows[ln] = sorted[n]; });
+  if (mode === 'raw') $('raw').value = serialize(); else buildRows();
+  changed(true, 'edit', slots[0], 0);
+}
+
+/* ---------- Bilan à droite ---------- */
+const nf1 = x => nf(x, 1);
+const nfr = x => String(Math.round(x * 10) / 10).replace('.', ',');
+const inkSummary = k => k.mode === 'none' ? 'Pas d\'encre' : `Encre : traînée ×${nfr(k.band)}${k.bandWritten ? '' : ' (auto)'}` + (k.mode === 'band' ? ', sans coulures' : `, coulures ×${nfr(k.drip)}${k.dripWritten ? '' : ' (auto)'}`);
+function render() {
+  const { posts, warns, end } = parse(currentText());
+  const secs = sections(posts, warns, end);
+  lastSecs = secs;
+  const nLines = currentText().split('\n').length;
+  secStart = secs.map(s => s.start);
+  rowSec = Array.from({ length: nLines }, (_, ln) => { let k = -1; secStart.forEach((st, j) => { if (ln >= st) k = j; }); return k; });
+  $('endNote').textContent = end ? `Fin calée par l'ancre du bas : ${fmt(end.t)}${end.label ? ' (' + end.label + ')' : ''}. La durée ci-dessus ne sert pas.` : `Pas d'ancre de fin : la dernière section s'arrête à ${fmt(cfg.duration)}.`;
+  $('warns').innerHTML = warns.map(w => `<p class="warn">${esc(w)}</p>`).join('');
+  if (!secs.length) {
+    $('total').innerHTML = '<p class="empty">Écris ou colle des textes à gauche (au moins deux lignes).</p>';
+    $('secs').innerHTML = '';
+    return;
+  }
+  const need = secs.reduce((a, s) => a + s.need, 0), room = secs.reduce((a, s) => a + s.room, 0);
+  const n = secs.reduce((a, s) => a + s.posts.length, 0);
+  const d = room - need;
+  $('total').innerHTML = `
+    <div class="fig"><span class="lab">Lecture prévue</span><span class="val">${nf(need)} <small>s</small></span></div>
+    <div class="fig"><span class="lab">Temps de musique</span><span class="val">${nf(room)} <small>s</small></span></div>
+    <div class="fig"><span class="lab">${Math.abs(d) < 1 ? 'Écart' : d > 0 ? 'Il manque' : 'En trop'}</span><span class="val${d >= 1 ? ' short' : ''}">${nf(Math.abs(d))} <small>s</small></span><span class="lab">${plural(n, 'post')} hors ouverture, ${plural(secs.length, 'section')}</span></div>`;
+  $('secs').innerHTML = secs.map((s, k) => {
+    const scale = Math.max(s.room, s.need, 0.001);
+    const pct = x => (100 * Math.max(0, x) / scale).toFixed(2) + '%';
+    const nPosts = Math.round(Math.abs(s.diff) / s.avgBud);
+    let cls, txt;
+    if (Math.abs(s.diff) < 1) { cls = 'ok'; txt = 'Pile'; }
+    else if (s.diff > 0) { cls = 'short'; txt = `Il manque ${nf(s.diff)} s, ≈ ${plural(Math.max(1, nPosts), 'post')}`; }
+    else { cls = 'over'; txt = `${nf(-s.diff)} s en trop, ≈ ${plural(Math.max(1, nPosts), 'post')}`; }
+    return `<article class="sec${k === active ? ' on' : ''}" data-k="${k}" title="Aller à l'ancre dans le texte">
+      <div class="sec-head">
+        <span class="span">${fmt(s.from)} → ${fmt(s.to)}<small>${nf(s.room)} s de musique</small></span>
+        <span class="verdict ${cls}">${txt}</span>
+      </div>
+      ${s.label ? `<div class="mood">${esc(s.label)}</div>` : ''}
+      <div class="inkline">${inkSummary(s.inkK)}</div>
+      <div class="bars">
+        <span class="k">Musique</span><div class="track"><div class="fill avail" style="width:${pct(s.room)}"></div></div><span class="n">${nf(s.room)} s</span>
+        <span class="k">Lecture</span><div class="track"><div class="fill read" style="width:${pct(s.need)}">${['oblig', 'solide', 'normal', 'faible'].filter(t => s.read[t] > 0).map(t => `<span class="t-${t}" style="width:${(100 * s.read[t] / s.need).toFixed(2)}%"></span>`).join('')}</div></div><span class="n">${nf(s.need)} s</span>
+      </div>
+      <div class="meta">
+        <span><b>${s.posts.length}</b> posts : ${s.count.oblig ? s.count.oblig + ' ++, ' : ''}${s.count.solide} +, ${s.count.normal} normaux, ${s.count.faible} -</span>
+        <span>moyenne <b>${Math.round(s.avgLen)}</b> car., <b>${nf(s.avgBud)} s</b> par post</span>
+        ${s.posts.length > 1 ? `<button type="button" class="sort" title="Range les posts de cette section par nombre de caractères (Ctrl/⌘ Z pour annuler)">${s.desc ? 'Trier : courtes d\'abord' : 'Trier : longues d\'abord'}</button>` : ''}
+      </div>
+    </article>`;
+  }).join('');
+  if (mode === 'rows') [...edIn.children].forEach((el, i) => el.classList.toggle('insec', active >= 0 && rowSec[i] === active));
+}
+
+/* ---------- Réglages, modes, démo ---------- */
+const NUMS = ['forfait', 'perChar', 'duration', 'ahead', 'late', 'inkStart', 'inkEnd', 'inkCap', 'inkDrips'], CHECKS = ['metronome', 'ink', 'inkIntro'];
+function showCfg() {
+  NUMS.forEach(k => { $(k).value = cfg[k]; });
+  CHECKS.forEach(k => { $(k).checked = !!cfg[k]; });
+  $('inkColor').value = cfg.inkColor;
+}
+NUMS.forEach(k => $(k).addEventListener('input', () => {
+  const v = parseFloat(String($(k).value).replace(',', '.'));
+  if (isFinite(v) && v >= 0) { cfg[k] = v; saveDraft(); render(); }
+}));
+CHECKS.forEach(k => $(k).addEventListener('change', () => { cfg[k] = $(k).checked; saveDraft(); render(); }));
+$('inkColor').addEventListener('input', () => { cfg.inkColor = $('inkColor').value; saveDraft(); });
+function setMode(m) {
+  if (m === mode) return;
+  if (m === 'raw') { $('raw').value = serialize(); }
+  else { rows = fromText($('raw').value); buildRows(); snapshot('edit', 0, 0); }
+  mode = m;
+  $('ed').hidden = m === 'raw'; $('raw').hidden = m !== 'raw';
+  $('helpRows').hidden = m === 'raw'; $('helpRaw').hidden = m !== 'raw';
+  $('modeRows').setAttribute('aria-pressed', m === 'rows'); $('modeRaw').setAttribute('aria-pressed', m === 'raw');
+  render();
+}
+$('modeRows').addEventListener('click', () => setMode('rows'));
+$('modeRaw').addEventListener('click', () => setMode('raw'));
+$('raw').addEventListener('input', () => { clearTimeout(saveTmr); saveTmr = setTimeout(saveDraft, 200); clearTimeout(renderTmr); renderTmr = setTimeout(render, 150); });
+/* ---------- Versions : rangées sur le serveur de ennemi.net, une sauvegarde = un fichier daté ---------- */
+const API = '/api/doomscroll', ADMIN = '/api/admin';
+let current = null;   // { id, name, savedAt, saves } de la version ouverte ; null tant qu'elle n'est pas sauvée
+let savedSig = null;  // texte + réglages + nom au dernier chargement ou à la dernière sauvegarde
+let list = [];
+const sig = () => JSON.stringify([currentText(), cfg, $('vName').value.trim()]);
+const isDirty = () => sig() !== savedSig;
+const when = iso => new Date(iso).toLocaleString('fr-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+// Le brouillon reste sur cet appareil : une page fermée ou un serveur muet ne perdent rien.
+function saveDraft() {
+  store.set('dse.draft', JSON.stringify({ current, name: $('vName').value, text: currentText(), settings: cfg, savedSig }));
+  showState();
+}
+function setText(t) {
+  if (mode === 'raw') $('raw').value = t;
+  rows = fromText(t); buildRows();
+  hist.length = 0; hpos = -1; snapshot('edit', 0, 0);
+}
+function openRecord(rec) {
+  current = rec ? { id: rec.id, name: rec.name, savedAt: rec.savedAt, saves: rec.saves } : null;
+  cfg = { ...DEFAULTS, ...(rec ? rec.settings : {}) };
+  $('vName').value = rec ? rec.name : '';
+  setText(rec ? rec.text : DEMO); showCfg();
+  savedSig = rec ? sig() : null;
+  saveDraft(); render(); fillSelect();
+}
+
+function showState(msg) {
+  const el = $('vState'), d = isDirty();
+  $('vArchive').disabled = !current;
+  const test = $('vTest');
+  test.href = current ? `/doomscroll/?v=${encodeURIComponent(current.id)}` : '/doomscroll/';
+  test.setAttribute('aria-disabled', current ? 'false' : 'true');
+  test.title = current ? 'Ouvre la dernière sauvegarde de cette version sur la page téléphone' : 'Sauve la version pour pouvoir la tester';
+  if (msg) { el.className = 'vstate dirty'; el.textContent = msg; return; }
+  if (!current) { el.className = 'vstate dirty'; el.textContent = 'Pas encore sauvée : « Sauver » la range sur le serveur.'; return; }
+  el.className = 'vstate' + (d ? ' dirty' : ' ok');
+  el.textContent = d ? `Modifs non sauvées (dernière sauvegarde le ${when(current.savedAt)}).`
+    : `Sauvée le ${when(current.savedAt)}${current.saves > 1 ? ` · ${current.saves} sauvegardes gardées` : ''}.`;
+}
+
+function fillSelect() {
+  const sel = $('vSel');
+  sel.innerHTML = '';
+  const add = (value, label) => { const o = document.createElement('option'); o.value = value; o.textContent = label; sel.appendChild(o); };
+  if (!current) add('', '(non sauvée)');
+  list.forEach(v => add(v.id, v.name));
+  if (current && !list.some(v => v.id === current.id)) add(current.id, current.name);
+  add('__demo', '＋ Repartir du texte de démo');
+  sel.value = current ? current.id : '';
+}
+async function refreshList() {
+  try {
+    const r = await fetch(`${API}/versions`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    list = (await r.json()).versions;
+    fillSelect();
+    return true;
+  } catch (e) {
+    fillSelect();
+    showState('Le serveur des versions ne répond pas : tu écris sur cet appareil, rien n\'est perdu.');
+    return false;
+  }
+}
+async function loadVersion(id) {
+  try {
+    const r = await fetch(`${API}/version?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    openRecord(await r.json());
+  } catch (e) { fillSelect(); showState('Cette version ne se charge pas. Réessaie dans un instant.'); }
+}
+
+/* ---------- Questions dans la barre des versions ---------- */
+const askEl = $('vAsk');
+function ask(html, actions) {
+  askEl.innerHTML = html;
+  actions.forEach(([label, fn, primary]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+    if (primary) b.className = 'primary';
+    b.addEventListener('click', fn); askEl.appendChild(b);
+  });
+  askEl.hidden = false;
+  (askEl.querySelector('input') || askEl.querySelector('button')).focus();
+}
+const closeAsk = () => { askEl.hidden = true; askEl.innerHTML = ''; };
+
+function askLogin(retry) {
+  const go = async () => {
+    const pw = askEl.querySelector('input').value, err = askEl.querySelector('.err');
+    let r;
+    try {
+      r = await fetch(`${ADMIN}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) });
+    } catch (e) { err.textContent = 'Le serveur ne répond pas.'; return; }
+    if (r.status === 204) { closeAsk(); retry(); return; }
+    err.textContent = r.status === 429 ? 'Trop d\'essais : attends une minute.' : 'Mot de passe refusé.';
+  };
+  ask('<span>Pour écrire sur le serveur, le mot de passe de la page /admin :</span><input type="password" autocomplete="current-password" aria-label="Mot de passe"><span class="err"></span>',
+    [['Se connecter', go, true], ['Annuler', closeAsk]]);
+  askEl.querySelector('input').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+}
+
+async function send(path, method, body, retry) {
+  try {
+    const r = await fetch(`${ADMIN}${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.status === 401) { askLogin(retry); return null; }
+    if (r.status === 429) { showState('Trop d\'envois d\'un coup : attends une minute et réessaie.'); return null; }
+    return r;
+  } catch (e) {
+    showState('Le serveur ne répond pas : tes modifs restent sur cet appareil, réessaie plus tard.');
+    return null;
+  }
+}
+
+async function doSave(name, asNew, force) {
+  const body = { name, text: currentText(), settings: cfg };
+  if (!asNew && current) Object.assign(body, { id: current.id, base: current.savedAt }, force ? { force: true } : {});
+  const r = await send('/doomscroll/version', 'PUT', body, () => doSave(name, asNew, force));
+  if (!r) return;
+  if (r.status === 409) {
+    const { latest } = await r.json();
+    ask(`<span>« ${esc(latest.name)} » a été sauvée par quelqu'un d'autre le ${esc(when(latest.savedAt))}, après que tu l'as ouverte.</span>`, [
+      ['Garder la mienne par-dessus', () => { closeAsk(); doSave(name, asNew, true); }, true],
+      ['Charger la sienne (mes modifs partent)', () => { closeAsk(); loadVersion(latest.id); }],
+      ['Annuler', closeAsk]
+    ]);
+    return;
+  }
+  if (!r.ok) { showState(`Sauvegarde refusée par le serveur (${r.status}).`); return; }
+  const rec = await r.json();
+  current = { id: rec.id, name: rec.name, savedAt: rec.savedAt, saves: rec.saves };
+  $('vName').value = rec.name;
+  savedSig = sig();
+  saveDraft();
+  await refreshList();
+  showState();
+}
+function saveVersion(asNew) {
+  const name = $('vName').value.trim();
+  if (asNew || !current) {
+    const go = () => { const n = askEl.querySelector('input').value.trim(); if (!n) return; closeAsk(); $('vName').value = n; doSave(n, true, false); };
+    ask('<span>Nom de la nouvelle version :</span><input class="vname" maxlength="80" aria-label="Nom de la nouvelle version">', [['Créer', go, true], ['Annuler', closeAsk]]);
+    const input = askEl.querySelector('input');
+    input.value = asNew && name ? `${name} (bis)` : name;
+    input.select();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    return;
+  }
+  if (!name) { showState('Donne un nom à la version avant de la sauver.'); $('vName').focus(); return; }
+  doSave(name, false, false);
+}
+async function archiveVersion() {
+  if (!current) return;
+  const go = async () => {
+    closeAsk();
+    const r = await send('/doomscroll/archive', 'POST', { id: current.id }, go);
+    if (!r) return;
+    if (!r.ok) { showState(`Archivage refusé par le serveur (${r.status}).`); return; }
+    current = null; savedSig = null;
+    saveDraft(); await refreshList(); showState();
+  };
+  ask(`<span>Archiver « ${esc(current.name)} » ? Elle quitte la liste des deux pages ; son fichier reste sur le serveur, et le texte reste ici comme nouvelle version non sauvée.</span>`,
+    [['Archiver', go, true], ['Annuler', closeAsk]]);
+}
+
+$('vSave').addEventListener('click', () => saveVersion(false));
+$('vNew').addEventListener('click', () => saveVersion(true));
+$('vArchive').addEventListener('click', archiveVersion);
+$('vName').addEventListener('input', saveDraft);
+$('vSel').addEventListener('change', () => {
+  const id = $('vSel').value, back = () => { $('vSel').value = current ? current.id : ''; };
+  const go = () => { closeAsk(); if (id === '__demo') openRecord(null); else loadVersion(id); };
+  if (!isDirty()) { go(); return; }
+  ask('<span>Tes modifs non sauvées seront perdues.</span>', [['Charger quand même', go, true], ['Annuler', () => { closeAsk(); back(); }]]);
+});
+
+/* ---------- Au démarrage : le brouillon de cet appareil s'il y en a un, sinon la dernière version sauvée ---------- */
+let draft = null;
+try { draft = JSON.parse(store.get('dse.draft') || 'null'); } catch (e) {}
+if (draft && typeof draft.text === 'string') {
+  current = draft.current || null;
+  cfg = { ...DEFAULTS, ...(draft.settings || {}) };
+  $('vName').value = draft.name || '';
+  setText(draft.text);
+  savedSig = draft.savedSig ?? null;
+} else setText(DEMO);
+showCfg();
+render();
+fillSelect();
+showState();
+refreshList().then(ok => { if (ok && !draft && list.length) loadVersion(list[0].id); else if (ok) showState(); });
+})();
+</script>
+</body>
+</html>
