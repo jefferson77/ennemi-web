@@ -42,7 +42,7 @@ morceau/index.html       the trailer
 src/morceau/             its script and stylesheet (plain CSS, no Tailwind)
 admin/index.html         the live switch
 src/admin/               its script and stylesheet (plain CSS, no Tailwind)
-server/                  the live-state API: Node 24, no dependencies
+server/                  the live-state API: Node 26, no dependencies
 public/images/           carousel screenshots, served at /images/
 public/morceau/video/    trailer clips, .mp4 for Apple WebKit and .webm (with alpha) elsewhere
 public/morceau/audio/    the sound-check audio

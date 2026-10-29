@@ -10,7 +10,7 @@ the commands, the layout and deployment.
   copy it here.
 - **Static pages, one small service.** Vite multi-page build, vanilla JS modules, no framework.
   Every page is an entry in `build.rollupOptions.input` in `vite.config.js`. The only server code
-  is `server/`, the live-state API: Node 24 built-ins only, no dependencies — keep it that way.
+  is `server/`, the live-state API: Node 26 built-ins only, no dependencies — keep it that way.
 - **Secrets live in `.env` only** (git-ignored; `.env.example` is the template). Never commit a
   real value, and never move them into the infra repo: `make deploy` pushes `.env` to the VPS.
 - **Tailwind only on the landing page.** `src/morceau/styles.css` is plain CSS on purpose:
